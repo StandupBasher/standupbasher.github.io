@@ -45,7 +45,7 @@ type();
 
 
 // --- rotating domain brand with typing effect (random order, no repeats) ---
-const domains = ["wael.systems", "wael.sh", "shahadeh.dev"];
+const domains = ["wael.systems", "wael.sh", "shahadeh.dev", "waelshahadeh.com"];
 const brandEl = document.getElementById("brandText");
 
 let lastIndex = -1;
