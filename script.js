@@ -42,15 +42,22 @@ function type() {
 }
 type();
 
-// --- rotating domain brand ---
+// --- rotating domain brand (random order) ---
 const domains = ["wael.systems", "wael.sh", "shahadeh.dev"];
 const brandEl = document.getElementById("brandText");
-let current = 0;
+let lastIndex = -1;
 
-function updateBrand() {
-  current = (current + 1) % domains.length;
-  const [name, ext] = domains[current].split(".");
-  // quick fade-out / fade-in
+function updateBrandRandom() {
+  // pick a new random index different from last time
+  let newIndex;
+  do {
+    newIndex = Math.floor(Math.random() * domains.length);
+  } while (newIndex === lastIndex);
+
+  lastIndex = newIndex;
+  const [name, ext] = domains[newIndex].split(".");
+
+  // fade-out / fade-in animation
   brandEl.style.opacity = 0;
   setTimeout(() => {
     brandEl.innerHTML = `${name}<span class="accent">.${ext}</span>`;
@@ -58,4 +65,5 @@ function updateBrand() {
   }, 300);
 }
 
-setInterval(updateBrand, 3500); // every 3.5 s
+// change every 3.5 seconds
+setInterval(updateBrandRandom, 3500);
