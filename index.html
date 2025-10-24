@@ -1,16 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hello | Wael Shahadeh</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wael Shahadeh | Cybersecurity Portfolio</title>
+  <meta name="description" content="Wael Shahadeh — Cybersecurity student, malware research, and digital investigations." />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
+  <header class="nav">
+    <div class="brand">
+      <span class="dot"></span>
+      <span class="logo-text">wael<span class="accent">.systems</span></span>
+    </div>
+    <nav>
+      <a href="#about">About</a>
+      <a href="#projects">Projects</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+
   <main>
-    <h1>Hello, World!</h1>
-    <p>This site is live on GitHub Pages 🚀</p>
+    <!-- Terminal / hero -->
+    <section class="hero" aria-label="Intro">
+      <div class="terminal">
+        <div class="term-header">
+          <span class="btn red"></span>
+          <span class="btn yellow"></span>
+          <span class="btn green"></span>
+          <span class="path">wael@portfolio:~</span>
+        </div>
+        <div class="term-body">
+          <pre aria-live="polite"><span class="prompt">wael@portfolio</span>:<span class="path">~</span>$ <span id="typing"></span><span class="cursor" aria-hidden="true">▌</span></pre>
+        </div>
+      </div>
+      <p class="sub">Cybersecurity student • Malware research • RA & community builder</p>
+      <div class="cta-row">
+        <a class="btn-primary" href="#projects">View Projects</a>
+        <a class="btn-ghost" href="https://github.com/StandupBasher" target="_blank" rel="noopener">GitHub</a>
+        <a class="btn-ghost" href="https://www.linkedin.com/in/wael-shahadeh/" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section id="about" class="section">
+      <h2>About</h2>
+      <p>
+        I’m Wael Shahadeh — junior at Marist University pursuing a B.S. in Cybersecurity with minors in IS, IT,
+        and Criminal Justice. I’m hands-on with malware analysis, network traffic, and building secure lab
+        environments. I also serve as a Resident Assistant and advisor, turning complex topics into approachable,
+        engaging programs for students.
+      </p>
+      <ul class="badges" aria-label="Tech stack">
+        <li>Kali Linux</li>
+        <li>Wireshark</li>
+        <li>Python</li>
+        <li>Git</li>
+        <li>VirtualBox</li>
+      </ul>
+    </section>
+
+    <!-- Projects -->
+    <section id="projects" class="section">
+      <h2>Projects</h2>
+
+      <div class="grid">
+        <article class="card">
+          <h3>macOS Backdoor Detection (Research)</h3>
+          <p>Exploring ML-driven detection using system logs to identify backdoor behavior beyond signatures.</p>
+          <div class="tags"><span>macOS</span><span>ML</span><span>Security Logs</span></div>
+        </article>
+
+        <article class="card">
+          <h3>PC Repair & OS Re-imaging Internship</h3>
+          <p>Diagnosed, repaired, and re-imaged PCs for donation under an IT mentor — practical triage + imaging.</p>
+          <div class="tags"><span>Imaging</span><span>Deployment</span><span>Support</span></div>
+        </article>
+
+        <article class="card">
+          <h3>RA Security Programming</h3>
+          <p>Designed approachable security workshops & materials (threat models, phishing drills, safe computing).</p>
+          <div class="tags"><span>Education</span><span>Security</span><span>Leadership</span></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact" class="section">
+      <h2>Contact</h2>
+      <p>Open to internships, research collabs, and security projects.</p>
+      <div class="cta-row">
+        <a class="btn-primary" href="mailto:waelshahadeh@gmail.com">Email Me</a>
+        <a class="btn-ghost" href="Wael_Shahadeh_Resume.pdf" target="_blank" rel="noopener">Resume (PDF)</a>
+      </div>
+    </section>
   </main>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> Wael Shahadeh — <span class="accent">stay curious, stay secure</span></p>
+  </footer>
+
   <script src="script.js"></script>
 </body>
 </html>

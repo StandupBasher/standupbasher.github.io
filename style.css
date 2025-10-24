@@ -1,0 +1,115 @@
+:root{
+  --bg: #0b0c10;
+  --panel: #111216;
+  --text: #e8e8e8;
+  --muted: #a5a5a5;
+  --accent: #00ff99;       /* neon green */
+  --accent-2: #00e0ff;     /* cyan alt */
+  --glow: 0 0 12px rgba(0,255,153,.5), 0 0 32px rgba(0,255,153,.25);
+  --radius: 14px;
+  --shadow: 0 10px 30px rgba(0,0,0,.4);
+}
+
+*{ box-sizing: border-box; }
+html, body{ height: 100%; }
+body{
+  margin:0;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: radial-gradient(1200px 800px at 15% -10%, rgba(0,224,255,.08), transparent 60%),
+              radial-gradient(1000px 700px at 100% 0%, rgba(0,255,153,.06), transparent 60%),
+              var(--bg);
+  color: var(--text);
+}
+
+/* Top nav */
+.nav{
+  position: sticky; top:0; z-index: 10;
+  display:flex; align-items:center; justify-content:space-between;
+  gap: 16px; padding: 14px 22px;
+  background: linear-gradient(180deg, rgba(17,18,22,.9), rgba(17,18,22,.4), transparent);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.brand{ display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.2px; }
+.brand .dot{ width:10px; height:10px; background: var(--accent); border-radius:50%; box-shadow: var(--glow); }
+.logo-text{ text-transform: lowercase; }
+.accent{ color: var(--accent); text-shadow: var(--glow); }
+
+.nav a{
+  color: var(--text); text-decoration: none; opacity:.9;
+  padding: 8px 10px; border-radius: 10px;
+}
+.nav a:hover{ background: rgba(255,255,255,.05); }
+
+/* Hero / terminal */
+.hero{ max-width: 1000px; margin: 64px auto 24px; padding: 0 20px; text-align:center; }
+.terminal{
+  margin: 0 auto 18px; width:min(800px, 95%); background: var(--panel);
+  border: 1px solid rgba(255,255,255,.08); border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.term-header{
+  display:flex; align-items:center; gap:8px; padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.term-header .btn{ width:12px; height:12px; border-radius:50%; display:inline-block; }
+.red{ background:#ff5f56; } .yellow{ background:#ffbd2e; } .green{ background:#27c93f; }
+.term-header .path{ margin-left: auto; font-size: 12px; color: var(--muted); opacity:.9; }
+
+.term-body{ text-align:left; padding: 16px; font-size: 15px; line-height: 1.6; }
+.prompt{ color: var(--accent-2); }
+.path{ color: #8fd3c9; }
+.cursor{ animation: blink 1s steps(1) infinite; }
+@keyframes blink{ 50%{ opacity: 0; } }
+
+.sub{ color: var(--muted); margin: 6px 0 18px; }
+
+.cta-row{ display:flex; gap: 12px; justify-content:center; flex-wrap: wrap; }
+.btn-primary, .btn-ghost{
+  padding: 10px 16px; border-radius: 12px; text-decoration:none; transition:.15s ease;
+  border: 1px solid rgba(255,255,255,.14); font-weight:600;
+}
+.btn-primary{
+  background: linear-gradient(90deg, rgba(0,255,153,.12), rgba(0,224,255,.12));
+  color: var(--text); box-shadow: var(--glow);
+  border-color: rgba(0,255,153,.35);
+}
+.btn-primary:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+.btn-ghost{ color: var(--text); background: rgba(255,255,255,.04); }
+.btn-ghost:hover{ background: rgba(255,255,255,.08); transform: translateY(-1px); }
+
+/* Sections */
+.section{ max-width: 1000px; margin: 56px auto; padding: 0 20px; }
+.section h2{ font-size: 1.6rem; margin-bottom: 10px; text-shadow: 0 0 10px rgba(0,224,255,.2); }
+.section p{ color: #d9d9d9; }
+
+.badges{ list-style: none; padding:0; margin:16px 0 0; display:flex; gap:10px; flex-wrap:wrap; }
+.badges li{
+  padding: 6px 10px; border-radius: 999px;
+  background: rgba(0,224,255,.1); border: 1px solid rgba(0,224,255,.25);
+  color:#c8fbff; font-size: .85rem;
+}
+
+/* Project grid */
+.grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin-top:14px; }
+.card{
+  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.0));
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow);
+}
+.card h3{ margin: 0 0 8px; font-size: 1.05rem; }
+.card p{ color: #cfcfcf; margin:0 0 10px; }
+.tags{ display:flex; gap:8px; flex-wrap: wrap; }
+.tags span{
+  font-size: .78rem; padding: 5px 8px; border-radius: 8px;
+  background: rgba(0,255,153,.08); border: 1px solid rgba(0,255,153,.25); color: #caffea;
+}
+
+/* Footer */
+.footer{ text-align:center; color: var(--muted); padding: 40px 20px; }
+
+/* Small screens */
+@media (max-width: 560px){
+  .nav nav { display:none; }
+  .term-body{ font-size: 14px; }
+}
