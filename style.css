@@ -42,9 +42,10 @@ body{
 }
 .nav a:hover{ background: rgba(255,255,255,.05); }
 
-#brandText {
-  transition: opacity 0.3s ease;
-}
+#brandText { transition: opacity 0.3s ease; }
+.brand-cursor { margin-left: 2px; animation: blink 1s steps(1) infinite; opacity:.85; }
+@keyframes blink { 50% { opacity: 0; } }
+
 
 /* Hero / terminal */
 .hero{ max-width: 1000px; margin: 64px auto 24px; padding: 0 20px; text-align:center; }
