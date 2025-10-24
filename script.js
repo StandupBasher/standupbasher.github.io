@@ -3,7 +3,9 @@ const lines = [
   "whoami            # Wael Shahadeh",
   "cat mission.txt   # Building & breaking to learn",
   "ls projects/      # malware-detection  pc-repair  ra-security",
-  "echo \"Hello, World!\""
+  "echo \"Hello, World!\"",
+  "mkdir             # 'legion of dom'",
+
 ];
 
 const typingEl = document.getElementById("typing");
@@ -39,3 +41,21 @@ function type() {
   setTimeout(type, deleting ? 20 : 28); // speed
 }
 type();
+
+// --- rotating domain brand ---
+const domains = ["wael.systems", "wael.sh", "shahadeh.dev"];
+const brandEl = document.getElementById("brandText");
+let current = 0;
+
+function updateBrand() {
+  current = (current + 1) % domains.length;
+  const [name, ext] = domains[current].split(".");
+  // quick fade-out / fade-in
+  brandEl.style.opacity = 0;
+  setTimeout(() => {
+    brandEl.innerHTML = `${name}<span class="accent">.${ext}</span>`;
+    brandEl.style.opacity = 1;
+  }, 300);
+}
+
+setInterval(updateBrand, 3500); // every 3.5 s

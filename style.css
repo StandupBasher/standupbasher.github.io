@@ -21,6 +21,11 @@ body{
   color: var(--text);
 }
 
+#brandText {
+  transition: opacity 0.3s ease;
+}
+
+
 /* Top nav */
 .nav{
   position: sticky; top:0; z-index: 10;
