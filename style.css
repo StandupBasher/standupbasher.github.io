@@ -21,10 +21,6 @@ body{
   color: var(--text);
 }
 
-#brandText {
-  transition: opacity 0.3s ease;
-}
-
 
 /* Top nav */
 .nav{
@@ -45,6 +41,10 @@ body{
   padding: 8px 10px; border-radius: 10px;
 }
 .nav a:hover{ background: rgba(255,255,255,.05); }
+
+#brandText {
+  transition: opacity 0.3s ease;
+}
 
 /* Hero / terminal */
 .hero{ max-width: 1000px; margin: 64px auto 24px; padding: 0 20px; text-align:center; }
