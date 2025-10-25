@@ -1,11 +1,10 @@
 // Typing effect content (change freely)
 const lines = [
   "whoami            # Wael Shahadeh",
-  "cat mission.txt   # Building & breaking to learn",
+  "cat mission.txt   # building & breaking to learn",
   "ls projects/      # malware-detection  pc-repair  ra-security",
-  "echo \"Hello, World!\"",
-  "mkdir             # 'legion of dom'",
-
+  "mkdir wael-files  # personal & work stuff",
+  "nano goals.txt    # 1. keep learning 2. make an impact 3. keep growing",
 ];
 
 const typingEl = document.getElementById("typing");

@@ -19,8 +19,8 @@ body{
               radial-gradient(1000px 700px at 100% 0%, rgba(0,255,153,.06), transparent 60%),
               var(--bg);
   color: var(--text);
+  overflow-x:hidden;
 }
-
 
 /* Top nav */
 .nav{
@@ -46,7 +46,6 @@ body{
 .brand-cursor { margin-left: 2px; animation: blink 1s steps(1) infinite; opacity:.85; }
 @keyframes blink { 50% { opacity: 0; } }
 
-
 /* Hero / terminal */
 .hero{ max-width: 1000px; margin: 64px auto 24px; padding: 0 20px; text-align:center; }
 .terminal{
@@ -63,10 +62,16 @@ body{
 .term-header .path{ margin-left: auto; font-size: 12px; color: var(--muted); opacity:.9; }
 
 .term-body{ text-align:left; padding: 16px; font-size: 15px; line-height: 1.6; }
+.term-body pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
 .prompt{ color: var(--accent-2); }
 .path{ color: #8fd3c9; }
-.cursor{ animation: blink 1s steps(1) infinite; }
-@keyframes blink{ 50%{ opacity: 0; } }
+.cursor{ animation: blink 1s steps(1) infinite; inline-size:1ch; }
 
 .sub{ color: var(--muted); margin: 6px 0 18px; }
 
@@ -114,8 +119,59 @@ body{
 /* Footer */
 .footer{ text-align:center; color: var(--muted); padding: 40px 20px; }
 
-/* Small screens */
+/* ---- Flicker + CRT effect ---- */
+.tagline {
+  color: var(--muted);
+  margin-top: 6px;
+  font-style: italic;
+  font-size: clamp(13px, 3vw, 15px);
+  position: relative;
+  display: inline-block;
+  text-shadow: 0 0 3px rgba(0,255,153,.3), 0 0 6px rgba(0,224,255,.2);
+}
+
+.flicker {
+  animation: flicker 3.5s infinite;
+  text-shadow: 0 0 2px var(--accent), 0 0 5px var(--accent-2), 0 0 10px rgba(0,255,153,.3);
+}
+@keyframes flicker {
+  0%, 5%, 8%, 10%, 100% { opacity: 1; filter:none; }
+  6% { opacity: .75; filter: brightness(.9); }
+  9% { opacity: .6; filter: blur(.4px) brightness(1.1); }
+}
+
+/* CRT scanline overlay */
+body::after {
+  content:"";
+  pointer-events:none;
+  position:fixed; inset:0;
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(255,255,255,.03) 0px,
+      rgba(255,255,255,.01) 1px,
+      transparent 2px);
+  mix-blend-mode:overlay;
+  animation: scan 6s linear infinite;
+}
+@keyframes scan {
+  0% { opacity:.6; transform: translateY(-2%); }
+  50% { opacity:.3; transform: translateY(2%); }
+  100% { opacity:.6; transform: translateY(-2%); }
+}
+
+/* Subtle global glow pulse */
+@keyframes glow {
+  0%, 100% { filter:brightness(1); }
+  50% { filter:brightness(1.1) saturate(1.1); }
+}
+.hero, .footer, .nav {
+  animation: glow 10s ease-in-out infinite;
+}
+
+/* ---- Small screens ---- */
 @media (max-width: 560px){
   .nav nav { display:none; }
-  .term-body{ font-size: 14px; }
+  .hero { margin: 40px auto 16px; padding: 0 14px; }
+  .terminal { width: 100%; border-radius: 10px; }
+  .term-body { font-size: clamp(12px, 3.9vw, 14px); padding: 12px 14px; }
 }
