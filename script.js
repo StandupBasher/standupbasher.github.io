@@ -1,4 +1,3 @@
-// Typing effect content (change freely)
 const lines = [
   "whoami            # Wael Shahadeh",
   "cat mission.txt   # building & breaking to learn",
@@ -24,7 +23,7 @@ function type() {
     typingEl.textContent = current;
     if (charIndex === full.length) {
       deleting = true;
-      setTimeout(type, 900); // pause at end of line
+      setTimeout(type, 900);
       return;
     }
   } else {
@@ -37,25 +36,24 @@ function type() {
       return;
     }
   }
-  setTimeout(type, deleting ? 20 : 28); // speed
+  setTimeout(type, deleting ? 20 : 28);
 }
 type();
 
 
 
-// --- rotating domain brand with typing effect (random order, no repeats) ---
 const domains = ["wael.systems", "wael.sh", "shahadeh.dev", "waelshahadeh.com"];
 const brandEl = document.getElementById("brandText");
 
 let lastIndex = -1;
 let target = "";
 let shownLength = 0;
-let mode = "typing"; // "typing" | "erasing" | "waiting"
+let mode = "typing";
 
-const TYPE_SPEED = 75;     // ms per character while typing
-const ERASE_SPEED = 35;    // ms per character while erasing
-const HOLD_AFTER_TYPE = 5000; // ms hold after full word typed
-const HOLD_AFTER_ERASE = 450; // ms before starting next word
+const TYPE_SPEED = 75;
+const ERASE_SPEED = 35;
+const HOLD_AFTER_TYPE = 5000;
+const HOLD_AFTER_ERASE = 450;
 
 function pickNewDomain() {
   let idx;
@@ -69,7 +67,7 @@ function renderPartial(text, n) {
   const dot = partial.indexOf(".");
   if (dot >= 0) {
     const name = partial.slice(0, dot);
-    const ext = partial.slice(dot); // includes the '.'
+    const ext = partial.slice(dot);
     brandEl.innerHTML = `${name}<span class="accent">${ext}</span>`;
   } else {
     brandEl.textContent = partial;
@@ -88,7 +86,6 @@ function tick() {
     renderPartial(target, shownLength);
 
     if (shownLength >= target.length) {
-      // ensure final accent wrapping is perfect
       const [name, ext] = target.split(".");
       brandEl.innerHTML = `${name}<span class="accent">.${ext}</span>`;
       mode = "waiting";
@@ -109,7 +106,6 @@ function tick() {
     return setTimeout(tick, ERASE_SPEED);
   }
 
-  // waiting (should be transitioned by timeouts above)
 }
 
 tick();

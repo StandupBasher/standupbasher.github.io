@@ -3,8 +3,8 @@
   --panel: #111216;
   --text: #e8e8e8;
   --muted: #a5a5a5;
-  --accent: #00ff99;       /* neon green */
-  --accent-2: #00e0ff;     /* cyan alt */
+  --accent: #00ff99;
+  --accent-2: #00e0ff;
   --glow: 0 0 12px rgba(0,255,153,.5), 0 0 32px rgba(0,255,153,.25);
   --radius: 14px;
   --shadow: 0 10px 30px rgba(0,0,0,.4);
@@ -22,7 +22,6 @@ body{
   overflow-x:hidden;
 }
 
-/* Top nav */
 .nav{
   position: sticky; top:0; z-index: 10;
   display:flex; align-items:center; justify-content:space-between;
@@ -46,7 +45,6 @@ body{
 .brand-cursor { margin-left: 2px; animation: blink 1s steps(1) infinite; opacity:.85; }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* Hero / terminal */
 .hero{ max-width: 1000px; margin: 64px auto 24px; padding: 0 20px; text-align:center; }
 .terminal{
   margin: 0 auto 18px; width:min(800px, 95%); background: var(--panel);
@@ -89,7 +87,6 @@ body{
 .btn-ghost{ color: var(--text); background: rgba(255,255,255,.04); }
 .btn-ghost:hover{ background: rgba(255,255,255,.08); transform: translateY(-1px); }
 
-/* Sections */
 .section{ max-width: 1000px; margin: 56px auto; padding: 0 20px; }
 .section h2{ font-size: 1.6rem; margin-bottom: 10px; text-shadow: 0 0 10px rgba(0,224,255,.2); }
 .section p{ color: #d9d9d9; }
@@ -101,7 +98,6 @@ body{
   color:#c8fbff; font-size: .85rem;
 }
 
-/* Project grid */
 .grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin-top:14px; }
 .card{
   background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.0));
@@ -116,10 +112,8 @@ body{
   background: rgba(0,255,153,.08); border: 1px solid rgba(0,255,153,.25); color: #caffea;
 }
 
-/* Footer */
 .footer{ text-align:center; color: var(--muted); padding: 40px 20px; }
 
-/* ---- Flicker + CRT effect ---- */
 .tagline {
   color: var(--muted);
   margin-top: 6px;
@@ -140,7 +134,6 @@ body{
   9% { opacity: .6; filter: blur(.4px) brightness(1.1); }
 }
 
-/* CRT scanline overlay */
 body::after {
   content:"";
   pointer-events:none;
@@ -159,7 +152,6 @@ body::after {
   100% { opacity:.6; transform: translateY(-2%); }
 }
 
-/* Subtle global glow pulse */
 @keyframes glow {
   0%, 100% { filter:brightness(1); }
   50% { filter:brightness(1.1) saturate(1.1); }
@@ -168,7 +160,6 @@ body::after {
   animation: glow 10s ease-in-out infinite;
 }
 
-/* ---- Small screens ---- */
 @media (max-width: 560px){
   .nav nav { display:none; }
   .hero { margin: 40px auto 16px; padding: 0 14px; }

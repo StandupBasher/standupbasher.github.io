@@ -17,7 +17,6 @@
       display: flex; gap: 8px;
     }
     .toolbar a { text-decoration: none; }
-    /* Mobile fallback message (if embed blocked) */
     .fallback {
       display: none; place-self: center; text-align: center; padding: 16px; color: var(--text,#e8e8e8);
     }
@@ -26,23 +25,17 @@
   </style>
 </head>
 <body>
-  <!-- Minimal toolbar over the PDF -->
-
   <div class="wrap">
-    <!-- Try to embed the PDF while keeping URL as /resume -->
     <iframe class="frame" src="..\assets\Wael_Shahadeh_Resume.pdf" title="Resume PDF"></iframe>
     <div class="fallback">
       <p>Can’t display the PDF inline on this device.</p>
       <p><a class="btn-primary" href="..\assets\Wael_Shahadeh_Resume.pdf">Open the PDF</a></p>
     </div>
   </div>
-
+  
   <script>
-    // Simple check: if the iframe errors, show fallback
     const iframe = document.querySelector('.frame');
     iframe.addEventListener('error', () => document.body.classList.add('no-pdf'));
-    // Optional cache-bust when you update the file:
-    // iframe.src = "/assets/Wael_Shahadeh_Resume.pdf?v=" + Date.now();
   </script>
 </body>
 </html>
