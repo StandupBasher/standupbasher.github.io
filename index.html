@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Wael Shahadeh | Cybersecurity Portfolio</title>
   <meta name="description" content="Wael Shahadeh — Cybersecurity student, malware research, and digital investigations." />
+  <link rel="canonical" href="https://wael.sh/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Wael Shahadeh | Cybersecurity Portfolio" />
+  <meta property="og:description" content="Wael Shahadeh — Cybersecurity student, malware research, and digital investigations." />
+  <meta property="og:url" content="https://wael.sh/" />
+  <meta name="twitter:card" content="summary" />
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
@@ -17,6 +23,7 @@
         <span class="brand-cursor">▌</span>
     </div>
     <nav>
+      <a href="#feed">Feed</a>
       <a href="#about">About</a>
       <a href="#projects">Projects</a>
       <a href="#contact">Contact</a>
@@ -41,6 +48,23 @@
         <a class="btn-primary" href="#projects">View Projects</a>
         <a class="btn-ghost" href="https://github.com/StandupBasher" target="_blank" rel="noopener">GitHub</a>
         <a class="btn-ghost" href="https://www.linkedin.com/in/wael-shahadeh/" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+    </section>
+
+    <section id="feed" class="section" aria-label="WaelSocial signed feed">
+      <h2>WaelSocial</h2>
+      <p class="ws-sub">
+        A live, signed feed. Verified entries are checked in <em>your</em> browser —
+        Ed25519 via Web Crypto against the feed's public key. Auto-pulled security
+        news is labeled and never gets the checkmark. View source; it's all client-side.
+      </p>
+      <div class="ws-filters" role="group" aria-label="Filter feed">
+        <button type="button" class="ws-pill on" data-ws-filter="all">All</button>
+        <button type="button" class="ws-pill" data-ws-filter="mine">My work</button>
+        <button type="button" class="ws-pill" data-ws-filter="signal">Security signal</button>
+      </div>
+      <div id="ws-feed" class="ws-feed">
+        <p class="ws-empty">Loading feed…</p>
       </div>
     </section>
 
@@ -101,6 +125,7 @@
   </footer>
 
   <script src="script.js"></script>
+  <script src="waelsocial.js"></script>
 </body>
 </html>
  

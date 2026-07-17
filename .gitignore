@@ -1,0 +1,19 @@
+# feed data and key material never enter this repo (waelsocial hard rule)
+feed*.json
+*.pem
+*.key
+keys/
+outbox/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# local tooling state
+.claude/
+
+# editor / OS noise
+.DS_Store
+Thumbs.db
+*.swp

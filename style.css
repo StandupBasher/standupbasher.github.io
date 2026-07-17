@@ -166,3 +166,51 @@ body::after {
   .terminal { width: 100%; border-radius: 10px; }
   .term-body { font-size: clamp(12px, 3.9vw, 14px); padding: 12px 14px; }
 }
+
+/* ── WaelSocial signed feed ── */
+.ws-sub{ color: var(--muted); font-size: .92rem; margin: 4px 0 16px; }
+.ws-filters{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+.ws-pill{
+  font: inherit; font-size: .85rem; cursor: pointer;
+  padding: 6px 12px; border-radius: 999px;
+  background: rgba(255,255,255,.04); color: var(--text);
+  border: 1px solid rgba(255,255,255,.14); transition: .15s ease;
+}
+.ws-pill:hover{ background: rgba(255,255,255,.08); }
+.ws-pill.on{
+  background: rgba(0,255,153,.12); border-color: rgba(0,255,153,.45);
+  color: #caffea; box-shadow: var(--glow);
+}
+.ws-feed{ display:flex; flex-direction:column; gap:12px; min-height: 280px; }
+.ws-post{
+  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow);
+}
+.ws-meta{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  font-size: .78rem; color: var(--muted); margin-bottom: 8px;
+}
+.ws-kind{
+  text-transform: uppercase; letter-spacing: .5px;
+  padding: 2px 8px; border-radius: 6px; font-size: .7rem;
+}
+.ws-kind.mine{ background: rgba(0,255,153,.1); border:1px solid rgba(0,255,153,.3); color:#caffea; }
+.ws-kind.take{ background: rgba(0,224,255,.1); border:1px solid rgba(0,224,255,.3); color:#c8fbff; }
+.ws-kind.relay{ background: rgba(255,180,84,.1); border:1px solid rgba(255,180,84,.3); color:#ffd9a8; }
+.ws-badge{ margin-left:auto; font-size: .75rem; }
+.ws-badge.checking{ color: var(--muted); }
+.ws-badge.ok{ color: var(--accent); text-shadow: 0 0 8px rgba(0,255,153,.4); }
+.ws-badge.bad{ color: #ff6b6b; }
+.ws-badge.relay{ color: #ffb454; }
+.ws-badge.unknown{ color: #c9b458; }
+.ws-body{ white-space: pre-wrap; overflow-wrap: anywhere; color: #d9d9d9; }
+.ws-src{ display:inline-block; margin-top:10px; font-size:.8rem; color: var(--accent-2); text-decoration:none; }
+.ws-src:hover{ text-decoration: underline; }
+.ws-empty, .ws-error{ color: var(--muted); font-size: .9rem; }
+.ws-error{ color: #ff6b6b; }
+
+@media (max-width: 560px){
+  .ws-post{ padding: 12px; }
+  .ws-badge{ margin-left: 0; flex-basis: 100%; }
+}
