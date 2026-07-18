@@ -1,0 +1,13 @@
+[package]
+name = "wael-sh-platform"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "postgres", "macros"] }
+anyhow = "1"
+axum = "0.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }

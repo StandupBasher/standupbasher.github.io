@@ -1,5 +1,10 @@
 const API_BASE = "https://api.wael.sh";
 
+// The one true signing key. The ✓ attests authorship by THIS key specifically —
+// never whatever key the response happens to carry. If a served feed presents a
+// different pubkey (origin / DNS / CDN compromise), nothing is shown as verified.
+const PINNED_PUBKEY = "/XKGM2r0/oyl47HkuhDK8JiH5pUJvPlRi8btV03S/mE=";
+
 function canonicalize(entry) {
     const sourceUrl = entry.source?.url ?? "";
     const mediaHash = entry.media?.sha256 ?? "";
@@ -36,7 +41,7 @@ async function renderFeed(feed, filter, host) {
     let pubKey = null;
     try {
         pubKey = await crypto.subtle.importKey(
-            "raw", Uint8Array.from(atob(feed.pubkey), (c) => c.charCodeAt(0)),
+            "raw", Uint8Array.from(atob(PINNED_PUBKEY), (c) => c.charCodeAt(0)),
             { name: "Ed25519" }, false, ["verify"]);
     } catch {
         console.warn("[waelsocial] This browser can't verify Ed25519 — entries shown unverified");
@@ -78,8 +83,8 @@ async function renderFeed(feed, filter, host) {
             : (e.type === "relay" || !e.sig) ? null : undefined;
         if (ok === null) { badge.className = "ws-badge relay"; badge.textContent = "auto · sourced"; }
         else if (ok === undefined) { badge.className = "ws-badge unknown"; badge.textContent = "unverified · browser lacks Ed25519"; }
-        else if (ok) { badge.className = "ws-badge ok"; badge.textContent = "W verified"; }
-        else { badge.className = "ws-badge bad"; badge.textContent = "M signature failed"; }
+        else if (ok) { badge.className = "ws-badge ok"; badge.textContent = "✓ verified"; }
+        else { badge.className = "ws-badge bad"; badge.textContent = "✗ signature failed"; }
     }
 }
 
@@ -104,7 +109,13 @@ async function initWaelSocial() {
         host.replaceChildren(elt("p", "ws-error", "Feed unavailable right now — check back soon."));
         return;
     }
-    let filter = "all";
+    if (feed.pubkey !== PINNED_PUBKEY) {
+        console.error("[waelsocial] feed pubkey does not match the pinned key — refusing to verify");
+        host.replaceChildren(elt("p", "ws-error",
+            "This feed was not signed by wael.sh's key — refusing to display it as verified."));
+        return;
+    }
+    let filter = "mine";  // default view is my authored work, not the CVE ticker
     await renderFeed(feed, filter, host);
     document.querySelectorAll("[data-ws-filter]").forEach((b) =>
         b.addEventListener("click", () => {

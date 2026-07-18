@@ -23,9 +23,10 @@ import io
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import psycopg2
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
@@ -34,9 +35,11 @@ SIGNABLE_TYPES = ("mine", "take")  # relay is deliberately absent
 ID_PREFIX = {"mine": "m-", "take": "t-"}
 
 KEY_PATH = Path(os.environ.get("WAELSOCIAL_KEY", "~/keys/waelsocial-signing.pem")).expanduser()
-FEED_PATH = Path(os.environ.get("WAELSOCIAL_FEED", "~/waelsocial/feed.json")).expanduser()
 OUTBOX = Path(os.environ.get("WAELSOCIAL_OUTBOX", "~/waelsocial/outbox")).expanduser()
 MEDIA_BASE = os.environ.get("WAELSOCIAL_MEDIA_BASE", "").rstrip("/")
+QUEUE_PATH = Path(os.environ.get("WAELSOCIAL_QUEUE", "/srv/waelsocial/queue.json")).expanduser()
+DSN = os.environ.get("WAELSOCIAL_DSN", "dbname=waelsocial")  # local socket, peer auth
+RELAY_CAP_PER_WEEK = 2  # hard cap, no override: news must not drown authored work
 
 
 def now_ts() -> str:
@@ -113,33 +116,49 @@ def process_image(path: Path):
     return clean, digest, f"{digest[:16]}{ext}"
 
 
-def empty_feed(key: Ed25519PrivateKey) -> dict:
-    return {"v": 1, "alg": "Ed25519", "pubkey": pubkey_b64(key),
-            "generated": now_ts(), "entries": []}
+def db_conn():
+    conn = psycopg2.connect(DSN)
+    conn.set_client_encoding("UTF8")  # never trust the ambient locale with signed bytes
+    return conn
 
 
-def load_feed(key: Ed25519PrivateKey) -> dict:
-    if not FEED_PATH.exists():
-        return empty_feed(key)
-    feed = json.loads(FEED_PATH.read_text(encoding="utf-8"))
-    if feed.get("pubkey") != pubkey_b64(key):
-        sys.exit("error: feed pubkey does not match the signing key — refusing to mix keys")
-    return feed
+def check_pubkey(cur, key: Ed25519PrivateKey) -> None:
+    cur.execute("SELECT pubkey FROM feed_meta")
+    row = cur.fetchone()
+    if row is None:
+        sys.exit("error: feed_meta is empty — run migrate-feed first")
+    if row[0] != pubkey_b64(key):
+        sys.exit("error: DB pubkey does not match the signing key — refusing to mix keys")
 
 
-def save_feed(feed: dict) -> None:
-    feed["generated"] = now_ts()
-    feed["entries"].sort(key=lambda e: e["ts"], reverse=True)  # newest-first
-    FEED_PATH.parent.mkdir(parents=True, exist_ok=True)
-    tmp = FEED_PATH.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(feed, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    tmp.replace(FEED_PATH)
+def entry_exists(cur, entry_id: str) -> bool:
+    cur.execute("SELECT 1 FROM entries WHERE id = %s", (entry_id,))
+    return cur.fetchone() is not None
 
 
-def next_id(feed: dict, type_: str) -> str:
+def insert_entry(cur, e: dict, upsert: bool = False) -> None:
+    src = e.get("source") or {}
+    med = e.get("media") or {}
+    conflict = ("""ON CONFLICT (id) DO UPDATE SET ts=EXCLUDED.ts, ts_at=EXCLUDED.ts_at,
+                   type=EXCLUDED.type, text=EXCLUDED.text, tags=EXCLUDED.tags,
+                   source_title=EXCLUDED.source_title, source_url=EXCLUDED.source_url,
+                   media_url=EXCLUDED.media_url, media_sha256=EXCLUDED.media_sha256,
+                   media_alt=EXCLUDED.media_alt, sig=EXCLUDED.sig"""
+                if upsert else "")
+    cur.execute(
+        f"""INSERT INTO entries (id, ts, ts_at, type, text, tags, source_title,
+                source_url, media_url, media_sha256, media_alt, sig)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) {conflict}""",
+        (e["id"], e["ts"], datetime.fromisoformat(e["ts"]), e["type"], e["text"],
+         e.get("tags", []), src.get("title"), src.get("url"), med.get("url"),
+         med.get("sha256"), med.get("alt"), e.get("sig")))
+
+
+def next_id(cur, type_: str) -> str:
     prefix = ID_PREFIX[type_]
-    nums = [int(e["id"][len(prefix):]) for e in feed["entries"]
-            if e["id"].startswith(prefix) and e["id"][len(prefix):].isdigit()]
+    cur.execute("SELECT id FROM entries WHERE id LIKE %s", (prefix + "%",))
+    nums = [int(r[0][len(prefix):]) for r in cur.fetchall()
+            if r[0][len(prefix):].isdigit()]
     return f"{prefix}{max(nums, default=0) + 1:04d}"
 
 
@@ -148,7 +167,7 @@ def visible_canonical(canon: bytes) -> str:
     return canon.decode("utf-8").replace("\n", "\\n\n") + "␄"  # ␄ marks true end
 
 
-def build_entry(args, key: Ed25519PrivateKey, feed: dict) -> tuple[dict, bytes | None, str | None]:
+def build_entry(args, key: Ed25519PrivateKey, cur) -> tuple[dict, bytes | None, str | None]:
     if args.text is not None:
         text = args.text
     elif args.text_file:
@@ -160,7 +179,7 @@ def build_entry(args, key: Ed25519PrivateKey, feed: dict) -> tuple[dict, bytes |
         sys.exit("error: empty post text")
 
     entry = {
-        "id": args.id_override or next_id(feed, args.type),
+        "id": args.id_override or next_id(cur, args.type),
         "ts": args.ts_override or now_ts(),
         "type": args.type,
         "text": text,
@@ -188,6 +207,80 @@ def build_entry(args, key: Ed25519PrivateKey, feed: dict) -> tuple[dict, bytes |
     return entry, clean_bytes, out_name
 
 
+def load_queue() -> dict:
+    if not QUEUE_PATH.exists():
+        return {"candidates": [], "seen": []}
+    return json.loads(QUEUE_PATH.read_text(encoding="utf-8"))
+
+
+def save_queue(q: dict) -> None:
+    tmp = QUEUE_PATH.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(q, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    tmp.replace(QUEUE_PATH)
+    try:
+        os.chmod(QUEUE_PATH, 0o660)
+    except OSError:
+        pass
+
+
+def take_candidate(cve: str) -> tuple[dict, dict]:
+    q = load_queue()
+    cand = next((c for c in q["candidates"] if c["cve"].upper() == cve.upper()), None)
+    if cand is None:
+        sys.exit(f"error: {cve} is not in the candidate queue (see `queue list`)")
+    return q, cand
+
+
+def retire_candidate(q: dict, cand: dict) -> None:
+    q["candidates"].remove(cand)
+    if cand["cve"] not in q["seen"]:
+        q["seen"].append(cand["cve"])
+    save_queue(q)
+
+
+def cmd_publish_relay(cve: str, dry_run: bool) -> None:
+    """Publish an UNSIGNED relay from a queue candidate.
+
+    This path never loads the signing key and never calls sign_entry():
+    relays are other people's advisories and must not carry my signature.
+    Text comes from the queue candidate (US-gov public-domain summary) —
+    there is deliberately no way to freehand relay text.
+    """
+    q, cand = take_candidate(cve)
+    conn = db_conn()  # DB access, yes — key access, never, in this path
+    cur = conn.cursor()
+
+    entry_id = f"r-{cand['cve'].upper()}"
+    if entry_exists(cur, entry_id):
+        sys.exit(f"error: {entry_id} already in feed")
+
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    cur.execute("SELECT id FROM entries WHERE type = 'relay' AND ts >= %s", (cutoff,))
+    recent = [r[0] for r in cur.fetchall()]
+    if len(recent) >= RELAY_CAP_PER_WEEK:
+        sys.exit(f"relay cap reached: {len(recent)}/{RELAY_CAP_PER_WEEK} unsigned relays "
+                 f"in the last 7 days ({', '.join(recent)}).\n"
+                 f"Write a take instead — that's the point of the cap.")
+
+    entry = {
+        "id": entry_id,
+        "ts": now_ts(),
+        "type": "relay",
+        "text": cand["summary"],
+        "tags": ["cve", cand["source"]],
+        "source": {"title": cand["title"], "url": cand["url"]},
+    }
+    if dry_run:
+        print("UNSIGNED relay (not written):")
+        print(json.dumps(entry, ensure_ascii=False, indent=2))
+        return
+    insert_entry(cur, entry)
+    conn.commit()
+    retire_candidate(q, cand)
+    print(f"published UNSIGNED relay {entry_id} -> postgres:waelsocial")
+    print(f"relay budget: {len(recent) + 1}/{RELAY_CAP_PER_WEEK} used this week")
+
+
 def cmd_resign(path: Path, key: Ed25519PrivateKey) -> None:
     """Migration helper: (re-)sign entries from a JSON file into the feed.
 
@@ -197,8 +290,9 @@ def cmd_resign(path: Path, key: Ed25519PrivateKey) -> None:
     """
     data = json.loads(path.read_text(encoding="utf-8"))
     entries = data["entries"] if isinstance(data, dict) else data
-    feed = load_feed(key)
-    by_id = {e["id"]: e for e in feed["entries"]}
+    conn = db_conn()
+    cur = conn.cursor()
+    check_pubkey(cur, key)
     for e in entries:
         e.pop("sig", None)
         if e["type"] in SIGNABLE_TYPES:
@@ -206,11 +300,11 @@ def cmd_resign(path: Path, key: Ed25519PrivateKey) -> None:
             state = "signed"
         else:
             state = "unsigned (relay)"
-        by_id[e["id"]] = e
+        insert_entry(cur, e, upsert=True)
         print(f"  {e['id']}: {state}")
-    feed["entries"] = list(by_id.values())
-    save_feed(feed)
-    print(f"wrote {FEED_PATH} ({len(feed['entries'])} entries)")
+    conn.commit()
+    cur.execute("SELECT count(*) FROM entries")
+    print(f"wrote postgres:waelsocial ({cur.fetchone()[0]} entries total)")
 
 
 def main() -> None:
@@ -236,7 +330,15 @@ def main() -> None:
                    help="print the raw-32-byte base64 public key and exit")
     p.add_argument("--resign", type=Path, metavar="ENTRIES_JSON",
                    help="(re-)sign entries from a JSON file into the feed")
+    p.add_argument("--take-from", metavar="CVE-ID",
+                   help="signed take about a queue candidate (source prefilled, candidate retired)")
+    p.add_argument("--publish-relay", metavar="CVE-ID",
+                   help="publish a queue candidate as an UNSIGNED relay (capped, never signed)")
     args = p.parse_args()
+
+    if args.publish_relay:  # before load_key(): this path must never touch the key
+        cmd_publish_relay(args.publish_relay, args.dry_run)
+        return
 
     key = load_key()
 
@@ -246,11 +348,25 @@ def main() -> None:
     if args.resign:
         cmd_resign(args.resign, key)
         return
+
+    queue = cand = None
+    if args.take_from:
+        if args.type not in (None, "take"):
+            p.error("--take-from implies --type take")
+        args.type = "take"
+        queue, cand = take_candidate(args.take_from)
+        if not args.source_url:
+            args.source_url = cand["url"]
+            args.source_title = args.source_title or cand["title"]
+        if not args.tags:
+            args.tags = f"cve,{cand['source']}"
     if not args.type:
         p.error("--type is required (mine|take)")
 
-    feed = load_feed(key)
-    entry, clean_bytes, out_name = build_entry(args, key, feed)
+    conn = db_conn()
+    cur = conn.cursor()
+    check_pubkey(cur, key)
+    entry, clean_bytes, out_name = build_entry(args, key, cur)
     canon = canonicalize(entry)
 
     if args.emit_canonical:
@@ -264,15 +380,18 @@ def main() -> None:
         print(json.dumps(entry, ensure_ascii=False, indent=2))
         return
 
-    if any(e["id"] == entry["id"] for e in feed["entries"]):
+    if entry_exists(cur, entry["id"]):
         sys.exit(f"error: id {entry['id']} already exists in feed")
     if clean_bytes:
         OUTBOX.mkdir(parents=True, exist_ok=True)
         (OUTBOX / out_name).write_bytes(clean_bytes)
         print(f"stripped image -> {OUTBOX / out_name}")
-    feed["entries"].insert(0, entry)
-    save_feed(feed)
-    print(f"signed {entry['id']} -> {FEED_PATH}")
+    insert_entry(cur, entry)
+    conn.commit()
+    if cand is not None:
+        retire_candidate(queue, cand)
+        print(f"retired {cand['cve']} from the candidate queue")
+    print(f"signed {entry['id']} -> postgres:waelsocial")
 
 
 if __name__ == "__main__":
