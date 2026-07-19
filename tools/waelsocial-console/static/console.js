@@ -160,6 +160,22 @@
   });
 })();
 
+// ── published: archive-then-delete, confirmed by typing the id ──────
+(function removeConfirm() {
+  document.querySelectorAll(".remove-form").forEach((form) =>
+    form.addEventListener("submit", (ev) => {
+      const id = form.querySelector("input[name=id]").value;
+      const typed = prompt(
+        `Remove ${id} from the public feed?\n` +
+        `The row is archived to entries_removed first (append-only), ` +
+        `but it disappears from wael.sh.\n\nType the id to confirm:`);
+      if (typed !== id) {
+        ev.preventDefault();
+        if (typed !== null) alert(`"${typed}" does not match ${id} — not removed.`);
+      }
+    }));
+})();
+
 // ── g-prefix view switching (all pages) ─────────────────────────────
 (function viewKeys() {
   let goPrefix = false;

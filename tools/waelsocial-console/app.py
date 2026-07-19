@@ -29,6 +29,7 @@ PORT = int(os.environ.get("CONSOLE_PORT", "8081"))
 QUEUE_PATH = Path("/srv/waelsocial/queue.json")
 DSN = "dbname=waelsocial"  # local socket, peer auth as wsdash (SELECT-only role)
 SIGN_POST = ["sudo", "-n", "-u", "claude", "--", "/home/claude/bin/sign-post"]
+FEED_REMOVE = ["sudo", "-n", "-u", "claude", "--", "/home/claude/bin/feed-remove"]
 RELAY_CAP = 2
 
 app = Flask(__name__)
@@ -179,19 +180,28 @@ def find_candidate(cve: str):
     return cand
 
 
-# ── sign-post invocation (argv + stdin only, never a shell) ─────────
+# ── privileged tool invocation (argv + stdin only, never a shell) ───
 
-def run_sign_post(args: list[str], stdin_text: str | None = None,
-                  full_stdout: bool = False) -> tuple[bool, str]:
+def _run_tool(base: list[str], args: list[str], stdin_text: str | None = None,
+              full_stdout: bool = False) -> tuple[bool, str]:
     try:
-        r = subprocess.run(SIGN_POST + args, input=stdin_text, text=True,
+        r = subprocess.run(base + args, input=stdin_text, text=True,
                            capture_output=True, timeout=30)
     except subprocess.TimeoutExpired:
-        return False, "sign-post timed out"
+        return False, f"{base[-1]} timed out"
     if full_stdout and r.returncode == 0:
         return True, r.stdout
     out = (r.stdout + r.stderr).strip()
     return r.returncode == 0, out[-500:]
+
+
+def run_sign_post(args: list[str], stdin_text: str | None = None,
+                  full_stdout: bool = False) -> tuple[bool, str]:
+    return _run_tool(SIGN_POST, args, stdin_text, full_stdout)
+
+
+def run_feed_remove(args: list[str]) -> tuple[bool, str]:
+    return _run_tool(FEED_REMOVE, args)
 
 
 # ── request guards & headers ────────────────────────────────────────
@@ -327,6 +337,18 @@ def preview():
     return {"ok": True, "entry": flat,
             "canonical": canonical(flat).decode("utf-8"),
             "verified": flat["verify"] == "ok"}
+
+
+@app.post("/remove")
+def remove_entry():
+    """Archive-then-delete via feed-remove. The console never deletes
+    directly — wsdash has no DB write grants; the claude-owned tool does the
+    transactional archive+delete and the archive table is append-only."""
+    entry_id = request.form.get("id", "").strip()
+    if not entry_id:
+        return done("published_view", "no entry id given", False)
+    ok, out = run_feed_remove(["--reason", "console", "--", entry_id])
+    return done("published_view", out, ok)
 
 
 @app.post("/queue/dismiss")

@@ -98,6 +98,9 @@ kbd {
 .btn.ghost { background: transparent; color: var(--muted); }
 .btn.danger { background: rgba(248, 113, 113, .08); color: #fca5a5; border-color: rgba(248, 113, 113, .35); }
 .btn.link { border: none; background: none; color: var(--accent); padding: 8px 6px; font-size: 13px; }
+.btn.link.danger { color: #fca5a5; opacity: .7; }
+.btn.link.danger:hover { opacity: 1; }
+.remove-form { display: inline-block; margin: 0; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 
 /* chips */
