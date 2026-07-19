@@ -183,7 +183,8 @@ def read_text(args) -> str:
     elif args.text_file:
         text = args.text_file.read_text(encoding="utf-8").rstrip("\n")
     else:
-        print("reading post text from stdin (^D to finish)…", file=sys.stderr)
+        if sys.stdin.isatty():
+            print("reading post text from stdin (^D to finish)…", file=sys.stderr)
         text = sys.stdin.read().rstrip("\n")
     if not text.strip():
         sys.exit("error: empty post text")
