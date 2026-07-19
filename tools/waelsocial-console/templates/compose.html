@@ -24,14 +24,14 @@
 
   <div class="compose-form">
     {% if cand %}
-    <form method="post" action="{{ url_for('publish_take') }}">
+    <form method="post" action="{{ url_for('publish_take') }}" data-preview="take">
       <input type="hidden" name="cve" value="{{ cand.cve }}">
       <textarea name="text" placeholder="your take — this is the good path" required autofocus></textarea>
       <p class="compose-note">signed as <b>take</b> · source + tags come from the candidate</p>
       <div class="row"><button class="btn primary big">Publish signed take ✓</button></div>
     </form>
     {% else %}
-    <form method="post" action="{{ url_for('publish_mine') }}">
+    <form method="post" action="{{ url_for('publish_mine') }}" data-preview="mine">
       <textarea name="text" placeholder="new post — your words, signed" required autofocus></textarea>
       <input type="text" name="tags" placeholder="tags, comma-separated (optional)">
       <p class="compose-note">signed as <b>mine</b></p>
@@ -40,5 +40,7 @@
     {% endif %}
   </div>
 </div>
+
+<div id="previewPane" class="preview" hidden></div>
 
 {% endblock %}

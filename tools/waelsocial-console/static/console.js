@@ -92,6 +92,74 @@
   });
 })();
 
+// ── compose: live signed preview via sign-post --dry-run ────────────
+(function composePreview() {
+  const form = document.querySelector("form[data-preview]");
+  const pane = document.getElementById("previewPane");
+  if (!form || !pane) return;
+
+  const el = (tag, cls, text) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  };
+
+  function render(d) {
+    pane.replaceChildren();
+    pane.hidden = false;
+    if (!d.ok) {
+      pane.append(el("p", "preview-label", "preview"), el("div", "preview-err", d.error));
+      return;
+    }
+    const e = d.entry;
+    pane.append(el("p", "preview-label", "preview — nothing written yet"));
+    const card = el("article", "post");
+    const head = el("div", "post-head");
+    head.append(el("span", "chip type " + e.type, e.type),
+                el("span", "post-id", e.id),
+                el("span", "post-date", e.ts),
+                el("span", "badge " + (d.verified ? "ok" : "bad"),
+                   d.verified ? "✓ will publish verified" : "✗ signature check failed"));
+    card.append(head, el("p", "post-text", e.text));
+    if (e.tags && e.tags.length) {
+      const tw = el("div", "post-tags");
+      e.tags.forEach((t) => tw.append(el("span", "", t)));
+      card.append(tw);
+    }
+    if (e.source_url) card.append(el("p", "preview-src", "source: " + e.source_url));
+    pane.append(card);
+    const det = el("details", "canon");
+    det.append(el("summary", "", "canonical string (exactly what gets signed)"),
+               el("pre", "", d.canonical));
+    pane.append(det);
+  }
+
+  let timer = null;
+  let seq = 0;
+  async function refresh() {
+    const my = ++seq;
+    const body = new URLSearchParams(new FormData(form));
+    body.set("kind", form.dataset.preview);
+    if (!body.get("text").trim()) {
+      pane.hidden = true;
+      return;
+    }
+    try {
+      const r = await fetch("/preview", { method: "POST", body });
+      const d = await r.json();
+      if (my === seq) render(d);
+    } catch (err) {
+      if (my === seq) render({ ok: false, error: "preview failed: " + err.message });
+    }
+  }
+
+  form.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(refresh, 700);
+  });
+})();
+
 // ── g-prefix view switching (all pages) ─────────────────────────────
 (function viewKeys() {
   let goPrefix = false;

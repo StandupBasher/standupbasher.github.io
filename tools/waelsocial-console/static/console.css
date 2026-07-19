@@ -190,6 +190,25 @@ textarea:focus, input:focus, #queueFilter:focus { outline: 2px solid var(--accen
 .compose-note { color: var(--faint); font-size: 13px; margin: 8px 0; }
 .row { display: flex; gap: 10px; }
 
+/* compose preview */
+.preview { margin-top: 18px; }
+.preview-label {
+  font-size: 12px; color: var(--faint); text-transform: uppercase;
+  letter-spacing: .8px; margin: 0 0 8px;
+}
+.preview-err {
+  border: 1px solid rgba(248, 113, 113, .4); background: rgba(248, 113, 113, .07);
+  border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #fca5a5;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.preview-src { color: var(--faint); font-size: 12px; overflow-wrap: anywhere; margin: 6px 0 0; }
+.canon summary { color: var(--faint); font-size: 13px; cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.canon pre {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px; font: 12px/1.6 var(--mono); white-space: pre-wrap;
+  overflow-wrap: anywhere; margin: 4px 0 0;
+}
+
 /* mobile */
 @media (max-width: 700px) {
   body { padding-bottom: 130px; }

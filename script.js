@@ -19,7 +19,7 @@ function showPage(page) {
 
 function go(page) {
   closePalette();
-  try { history.replaceState(null, "", page === "home" ? "#/" : "#/" + page); } catch (e) {}
+  try { history.replaceState(null, "", page === "home" ? "#/" : "#/" + page); } catch (e) { }
   showPage(page);
   window.scrollTo({ top: 0 });
 }
@@ -103,12 +103,14 @@ function runCommand(raw) {
   const out = [termLine(cmd, "", true)];
   const push = (text, cls) => out.push(termLine(text, cls || "t-muted"));
 
-  if (cmd === "") {}
+  if (cmd === "") { }
   else if (cmd === "help") push("commands: whoami · ls projects/ · cat mission.txt · cat goals.txt · open work|feed|writing|about|contact · contact · clear", "t-soft");
   else if (cmd === "whoami") push("Wael Shahadeh — cybersecurity senior at Marist. Malware research, network analysis, secure labs.");
   else if (cmd === "ls projects/" || cmd === "ls" || cmd === "ls projects") push("waelsocial-feed/  macos-backdoor-detection/  pc-reimaging/  ra-programming/", "t-accent");
   else if (cmd === "cat mission.txt") push("building & breaking to learn");
   else if (cmd === "cat goals.txt") push("1. keep learning  2. make an impact  3. keep growing");
+  else if (cmd === "meow") push("meow! 🐱", "t-accent");
+  else if (cmd === "evil") push("evil is a matter of perspective", "t-accent");
   else if (cmd === "contact") push("shahadehwael@gmail.com · github.com/StandupBasher · linkedin.com/in/wael-shahadeh", "t-soft");
   else if (cmd.startsWith("open ")) {
     const p = cmd.slice(5).trim();

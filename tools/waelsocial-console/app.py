@@ -181,12 +181,15 @@ def find_candidate(cve: str):
 
 # ── sign-post invocation (argv + stdin only, never a shell) ─────────
 
-def run_sign_post(args: list[str], stdin_text: str | None = None) -> tuple[bool, str]:
+def run_sign_post(args: list[str], stdin_text: str | None = None,
+                  full_stdout: bool = False) -> tuple[bool, str]:
     try:
         r = subprocess.run(SIGN_POST + args, input=stdin_text, text=True,
                            capture_output=True, timeout=30)
     except subprocess.TimeoutExpired:
         return False, "sign-post timed out"
+    if full_stdout and r.returncode == 0:
+        return True, r.stdout
     out = (r.stdout + r.stderr).strip()
     return r.returncode == 0, out[-500:]
 
@@ -288,6 +291,42 @@ def publish_relay():
     cve = request.form.get("cve", "").strip()
     ok, out = run_sign_post(["--publish-relay", cve])
     return done("published_view" if ok else "queue_view", out, ok)
+
+
+@app.post("/preview")
+def preview():
+    """Dry-run the exact publish path (same argv+stdin into sign-post) and
+    return the entry as it would be signed. Nothing is written; the returned
+    signature is verified server-side so the badge is honest, not cosmetic."""
+    text = request.form.get("text", "")
+    kind = request.form.get("kind", "mine")
+    if not text.strip():
+        return {"ok": False, "error": "type something to preview"}
+    if kind == "take":
+        cve = request.form.get("cve", "").strip()
+        if not find_candidate(cve):
+            return {"ok": False, "error": f"{cve} is not in the queue"}
+        args = ["--take-from", cve, "--dry-run"]
+    else:
+        tags = request.form.get("tags", "").strip()
+        args = ["--type", "mine"] + (["--tags", tags] if tags else []) + ["--dry-run"]
+    ok, out = run_sign_post(args, stdin_text=text, full_stdout=True)
+    if not ok:
+        return {"ok": False, "error": out}
+    marker = "entry JSON (not written):"
+    if marker not in out:
+        return {"ok": False, "error": "unexpected sign-post output"}
+    entry = json.loads(out.split(marker, 1)[1])
+    flat = {"id": entry["id"], "ts": entry["ts"], "type": entry["type"],
+            "text": entry["text"], "tags": entry.get("tags", []),
+            "source_url": (entry.get("source") or {}).get("url"),
+            "source_title": (entry.get("source") or {}).get("title"),
+            "media_sha256": (entry.get("media") or {}).get("sha256"),
+            "sig": entry.get("sig"), "edited_at": entry.get("edited_at")}
+    verify_entries([flat], feed_stats()["pubkey"])
+    return {"ok": True, "entry": flat,
+            "canonical": canonical(flat).decode("utf-8"),
+            "verified": flat["verify"] == "ok"}
 
 
 @app.post("/queue/dismiss")
