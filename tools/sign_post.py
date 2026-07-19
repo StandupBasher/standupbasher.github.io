@@ -165,8 +165,16 @@ def insert_entry(cur, e: dict, upsert: bool = False) -> None:
 
 
 def next_id(cur, type_: str) -> str:
+    """Ids are never reused, even after removal — a citation to m-0009 must
+    not silently resolve to different content later. Max over the live feed
+    AND both private archives; a gap in the public sequence is honest
+    evidence of a removal, not a defect."""
     prefix = ID_PREFIX[type_]
-    cur.execute("SELECT id FROM entries WHERE id LIKE %s", (prefix + "%",))
+    cur.execute(
+        """SELECT id FROM entries WHERE id LIKE %(p)s
+           UNION SELECT id FROM entries_removed WHERE id LIKE %(p)s
+           UNION SELECT id FROM entries_revisions WHERE id LIKE %(p)s""",
+        {"p": prefix + "%"})
     nums = [int(r[0][len(prefix):]) for r in cur.fetchall()
             if r[0][len(prefix):].isdigit()]
     return f"{prefix}{max(nums, default=0) + 1:04d}"
