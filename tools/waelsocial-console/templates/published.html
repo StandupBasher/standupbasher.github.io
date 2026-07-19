@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-bar">
+  <h1>Published</h1>
+  <span class="page-hint">live rows from Postgres — the same table wael.sh serves</span>
+</div>
+
+{% if not entries %}
+<p class="empty">Nothing published yet.</p>
+{% endif %}
+
+{% for e in entries %}
+<article class="post" data-id="{{ e.id }}">
+  <div class="post-head">
+    <span class="chip type {{ e.type }}">{{ e.type }}</span>
+    <span class="post-id">{{ e.id }}</span>
+    <span class="post-date">{{ e.ts }}</span>
+    {% if e.verify == 'ok' %}<span class="badge ok">✓ verified</span>
+    {% elif e.verify == 'ok-edited' %}<span class="badge ok">✓ verified · edited {{ e.edited_at[:10] }}</span>
+    {% elif e.verify == 'bad' %}<span class="badge bad">✗ SIGNATURE FAILED</span>
+    {% elif e.verify == 'relay' %}<span class="badge">unsigned relay</span>
+    {% else %}<span class="badge">verify unavailable</span>{% endif %}
+  </div>
+  <p class="post-text">{{ e.text }}</p>
+  {% if e.tags %}<div class="post-tags">{% for t in e.tags %}<span>{{ t }}</span>{% endfor %}</div>{% endif %}
+  {% if e.source_url %}
+  <a class="btn link" href="{{ e.source_url }}" target="_blank" rel="noopener">{{ e.source_title or e.source_url }} ↗</a>
+  {% endif %}
+</article>
+{% endfor %}
+
+{% endblock %}

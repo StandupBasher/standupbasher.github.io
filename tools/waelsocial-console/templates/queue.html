@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-bar">
+  <h1>Queue</h1>
+  <div class="page-tools">
+    <input id="queueFilter" type="search" placeholder="filter…" aria-label="Filter queue">
+    <div class="sort-toggle" role="group" aria-label="Sort NVD by">
+      <a href="{{ url_for('queue_view', sort='sev') }}" class="{{ 'on' if sort == 'sev' }}">severity</a>
+      <a href="{{ url_for('queue_view', sort='date') }}" class="{{ 'on' if sort == 'date' }}">date</a>
+    </div>
+  </div>
+</div>
+
+{% if not kev and not nvd %}
+<p class="empty">Queue is empty. The ingester runs every 6 hours.</p>
+{% endif %}
+
+{% macro card(c, kind) %}
+<article class="cand {{ kind }}" data-cve="{{ c.cve }}" tabindex="-1">
+  <label class="cand-sel"><input type="checkbox" class="sel" value="{{ c.cve }}" aria-label="Select {{ c.cve }}"></label>
+  <div class="cand-main">
+    <div class="cand-head">
+      <span class="cve">{{ c.cve }}</span>
+      {% set sevnum = c.severity|float(-1) %}
+      {% if sevnum >= 0 %}<span class="chip sev {{ 'crit' if sevnum >= 9.0 else 'high' }}">{{ c.severity }}</span>{% endif %}
+      <span class="chip src {{ kind }}">{{ c.source }}</span>
+      <span class="cand-date">{{ c.date }}</span>
+    </div>
+    <p class="cand-sum">{{ c.summary }}</p>
+    <div class="cand-actions">
+      <a class="btn primary" href="{{ url_for('compose_view', cve=c.cve) }}">Write take</a>
+      {% if c.url %}<a class="btn link" href="{{ c.url }}" target="_blank" rel="noopener">advisory ↗</a>{% endif %}
+      <details class="other">
+        <summary>more</summary>
+        <div class="other-row">
+          <form method="post" action="{{ url_for('publish_relay') }}">
+            <input type="hidden" name="cve" value="{{ c.cve }}">
+            <button class="btn ghost" {{ 'disabled' if relay_left == 0 }}>relay unsigned
+              {{ '(budget spent)' if relay_left == 0 else '(%d left)' % relay_left }}</button>
+          </form>
+          <form method="post" action="{{ url_for('queue_dismiss') }}">
+            <input type="hidden" name="cve" value="{{ c.cve }}">
+            <button class="btn danger">dismiss</button>
+          </form>
+        </div>
+      </details>
+    </div>
+  </div>
+</article>
+{% endmacro %}
+
+{% if kev %}
+<section class="group" data-group="kev">
+  <div class="group-head kev">
+    <h2>KEV — known exploited <span class="count">{{ kev|length }}</span></h2>
+    <button type="button" class="btn link select-group">select all</button>
+  </div>
+  {% for c in kev %}{{ card(c, 'kev') }}{% endfor %}
+</section>
+{% endif %}
+
+{% if nvd %}
+<section class="group" data-group="nvd">
+  <div class="group-head">
+    <h2>NVD — CVSS ≥ 8.0 <span class="count">{{ nvd|length }}</span></h2>
+    <button type="button" class="btn link select-group">select all</button>
+  </div>
+  {% for c in nvd %}{{ card(c, 'nvd') }}{% endfor %}
+</section>
+{% endif %}
+
+<form id="bulkBar" class="bulk-bar" method="post" action="{{ url_for('queue_dismiss') }}" hidden>
+  <span id="bulkCount">0 selected</span>
+  <button type="button" id="bulkClear" class="btn ghost">clear</button>
+  <button class="btn danger" id="bulkDismiss">Dismiss selected</button>
+</form>
+
+<p class="kbd-help">keys: <kbd>j</kbd>/<kbd>k</kbd> move · <kbd>x</kbd> select · <kbd>d</kbd> dismiss ·
+<kbd>t</kbd> take · <kbd>g</kbd><kbd>q</kbd>/<kbd>g</kbd><kbd>p</kbd>/<kbd>g</kbd><kbd>c</kbd> switch view</p>
+
+{% endblock %}

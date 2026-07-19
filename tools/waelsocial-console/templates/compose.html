@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-bar">
+  <h1>Compose</h1>
+  {% if cand %}<span class="page-hint">signed take on {{ cand.cve }}</span>
+  {% else %}<span class="page-hint">your words, signed</span>{% endif %}
+</div>
+
+<div class="compose-layout">
+  {% if cand %}
+  <aside class="cand compose-cand">
+    <div class="cand-head">
+      <span class="cve">{{ cand.cve }}</span>
+      {% set sevnum = cand.severity|float(-1) %}
+      {% if sevnum >= 0 %}<span class="chip sev {{ 'crit' if sevnum >= 9.0 else 'high' }}">{{ cand.severity }}</span>{% endif %}
+      <span class="chip src {{ cand.source }}">{{ cand.source }}</span>
+      <span class="cand-date">{{ cand.date }}</span>
+    </div>
+    <p class="cand-sum full">{{ cand.summary }}</p>
+    {% if cand.url %}<a class="btn link" href="{{ cand.url }}" target="_blank" rel="noopener">advisory ↗</a>{% endif %}
+  </aside>
+  {% endif %}
+
+  <div class="compose-form">
+    {% if cand %}
+    <form method="post" action="{{ url_for('publish_take') }}">
+      <input type="hidden" name="cve" value="{{ cand.cve }}">
+      <textarea name="text" placeholder="your take — this is the good path" required autofocus></textarea>
+      <p class="compose-note">signed as <b>take</b> · source + tags come from the candidate</p>
+      <div class="row"><button class="btn primary big">Publish signed take ✓</button></div>
+    </form>
+    {% else %}
+    <form method="post" action="{{ url_for('publish_mine') }}">
+      <textarea name="text" placeholder="new post — your words, signed" required autofocus></textarea>
+      <input type="text" name="tags" placeholder="tags, comma-separated (optional)">
+      <p class="compose-note">signed as <b>mine</b></p>
+      <div class="row"><button class="btn primary big">Sign &amp; publish ✓</button></div>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

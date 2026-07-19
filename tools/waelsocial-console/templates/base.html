@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>waelsocial console</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='console.css') }}">
+</head>
+<body>
+  <header class="shell-head">
+    <div class="shell-brand">waelsocial <span>console</span></div>
+    <nav class="shell-nav" aria-label="Sections">
+      <a href="{{ url_for('queue_view') }}" class="{{ 'on' if active == 'queue' }}">Queue
+        {% if queue_count %}<span class="nav-badge">{{ queue_count }}</span>{% endif %}</a>
+      <a href="{{ url_for('published_view') }}" class="{{ 'on' if active == 'published' }}">Published</a>
+      <a href="{{ url_for('compose_view') }}" class="{{ 'on' if active == 'compose' }}">Compose</a>
+    </nav>
+  </header>
+
+  <div class="guardrail" role="status">
+    <span><b>{{ stats.mine }}</b> mine</span>
+    <span><b>{{ stats.takes }}</b> takes</span>
+    <span><b>{{ stats.relays }}</b> relays</span>
+    <span class="guardrail-relay {{ 'warn' if relay_left == 0 }}">
+      relay budget {{ stats.relays_week }}/{{ relay_cap }} used
+      {%- if relay_left == 0 %} — write a take instead{% endif %}
+    </span>
+  </div>
+
+  <main>
+    {% if flash %}
+    <div class="flash {{ 'err' if flash_err }}">{{ flash }}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{{ url_for('static', filename='console.js') }}"></script>
+</body>
+</html>
