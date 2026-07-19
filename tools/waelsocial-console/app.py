@@ -143,8 +143,13 @@ def load_queue() -> dict:
 
 
 def save_queue(q: dict) -> None:
+    """Atomic tmp+rename, group-writable like sign-post's writer: queue.json
+    is shared mutable state between claude (ingest/sign-post) and wsdash
+    (triage), so whoever wrote last must leave it 660 or the other side's
+    next write fails."""
     tmp = QUEUE_PATH.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(q, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    os.chmod(tmp, 0o660)
     tmp.replace(QUEUE_PATH)
 
 
