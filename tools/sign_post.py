@@ -11,8 +11,13 @@ Two rules are enforced structurally, not by convention:
     stripped and auto-oriented first. There is no code path that hashes the
     original file and no flag to skip the strip.
 
-Canonical signing contract (waelsocial-v1) — byte-identical twin of
-canonicalize() in waelsocial.js. Any change requires a version bump and
+Canonical signing contract — byte-identical twin of canonicalize() in
+waelsocial.js. waelsocial-v1: seven LF-joined lines. waelsocial-v2 (edit,
+signed off 2026-07-19): eight lines, `edited:<ts>` after `ts:`; a post is
+v2 iff it carries edited_at. ts stays the original publish time and both
+timestamps are under the signature. Only text and tags are editable; the
+pre-edit row (old signature included) is archived to entries_revisions in
+the same transaction. Any further change requires a version bump and
 explicit sign-off.
 """
 
@@ -31,6 +36,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 CONTRACT = "waelsocial-v1"
+CONTRACT_V2 = "waelsocial-v2"  # edited posts only; never used at first publish
 SIGNABLE_TYPES = ("mine", "take")  # relay is deliberately absent
 ID_PREFIX = {"mine": "m-", "take": "t-"}
 
@@ -47,18 +53,21 @@ def now_ts() -> str:
 
 
 def canonicalize(entry: dict) -> bytes:
-    """Seven lines joined with a single LF, no trailing newline, UTF-8 bytes."""
+    """LF-joined lines, no trailing newline, UTF-8 bytes. v1 = 7 lines;
+    v2 (iff the entry carries edited_at) = 8, `edited:` after `ts:`."""
     source = (entry.get("source") or {}).get("url") or ""
     media = (entry.get("media") or {}).get("sha256") or ""
-    return "\n".join([
-        CONTRACT,
-        f"id:{entry['id']}",
-        f"ts:{entry['ts']}",
-        f"type:{entry['type']}",
-        f"source:{source}",
-        f"media:{media}",
-        f"text:{entry['text']}",
-    ]).encode("utf-8")
+    edited = entry.get("edited_at")
+    lines = [CONTRACT_V2 if edited else CONTRACT,
+             f"id:{entry['id']}",
+             f"ts:{entry['ts']}"]
+    if edited:
+        lines.append(f"edited:{edited}")
+    lines += [f"type:{entry['type']}",
+              f"source:{source}",
+              f"media:{media}",
+              f"text:{entry['text']}"]
+    return "\n".join(lines).encode("utf-8")
 
 
 def load_key() -> Ed25519PrivateKey:
@@ -143,15 +152,16 @@ def insert_entry(cur, e: dict, upsert: bool = False) -> None:
                    type=EXCLUDED.type, text=EXCLUDED.text, tags=EXCLUDED.tags,
                    source_title=EXCLUDED.source_title, source_url=EXCLUDED.source_url,
                    media_url=EXCLUDED.media_url, media_sha256=EXCLUDED.media_sha256,
-                   media_alt=EXCLUDED.media_alt, sig=EXCLUDED.sig"""
+                   media_alt=EXCLUDED.media_alt, sig=EXCLUDED.sig,
+                   edited_at=EXCLUDED.edited_at"""
                 if upsert else "")
     cur.execute(
         f"""INSERT INTO entries (id, ts, ts_at, type, text, tags, source_title,
-                source_url, media_url, media_sha256, media_alt, sig)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) {conflict}""",
+                source_url, media_url, media_sha256, media_alt, sig, edited_at)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) {conflict}""",
         (e["id"], e["ts"], datetime.fromisoformat(e["ts"]), e["type"], e["text"],
          e.get("tags", []), src.get("title"), src.get("url"), med.get("url"),
-         med.get("sha256"), med.get("alt"), e.get("sig")))
+         med.get("sha256"), med.get("alt"), e.get("sig"), e.get("edited_at")))
 
 
 def next_id(cur, type_: str) -> str:
@@ -167,7 +177,7 @@ def visible_canonical(canon: bytes) -> str:
     return canon.decode("utf-8").replace("\n", "\\n\n") + "␄"  # ␄ marks true end
 
 
-def build_entry(args, key: Ed25519PrivateKey, cur) -> tuple[dict, bytes | None, str | None]:
+def read_text(args) -> str:
     if args.text is not None:
         text = args.text
     elif args.text_file:
@@ -177,13 +187,18 @@ def build_entry(args, key: Ed25519PrivateKey, cur) -> tuple[dict, bytes | None, 
         text = sys.stdin.read().rstrip("\n")
     if not text.strip():
         sys.exit("error: empty post text")
+    return text
+
+
+def build_entry(args, key: Ed25519PrivateKey, cur) -> tuple[dict, bytes | None, str | None]:
+    text = read_text(args)
 
     entry = {
         "id": args.id_override or next_id(cur, args.type),
         "ts": args.ts_override or now_ts(),
         "type": args.type,
         "text": text,
-        "tags": [t.strip() for t in args.tags.split(",") if t.strip()],
+        "tags": [t.strip() for t in (args.tags or "").split(",") if t.strip()],
     }
 
     if args.type == "take" and not args.source_url:
@@ -281,6 +296,80 @@ def cmd_publish_relay(cve: str, dry_run: bool) -> None:
     print(f"relay budget: {len(recent) + 1}/{RELAY_CAP_PER_WEEK} used this week")
 
 
+EDIT_COLS = ("id", "ts", "ts_at", "type", "text", "tags", "source_title",
+             "source_url", "media_url", "media_sha256", "media_alt", "sig",
+             "edited_at")
+
+
+def cmd_edit(args, key: Ed25519PrivateKey) -> None:
+    """Edit text/tags of an existing signed post -> waelsocial-v2.
+
+    Everything else is frozen: id, ts (the original publish time), type,
+    source, media — argv flags that would change them are rejected. The
+    pre-edit row, old signature included, is archived into entries_revisions
+    in the same transaction that updates the entry, so an edit can never
+    silently rewrite history. Relays cannot be edited: they are unsigned by
+    design and there would be nothing honest to re-sign.
+    """
+    for flag, name in ((args.type, "--type"), (args.source_url, "--source-url"),
+                       (args.source_title, "--source-title"), (args.image, "--image"),
+                       (args.alt, "--alt"), (args.id_override, "--id"),
+                       (args.ts_override, "--ts")):
+        if flag:
+            sys.exit(f"error: {name} is not allowed with --edit — only text and tags are editable")
+
+    conn = db_conn()
+    cur = conn.cursor()
+    check_pubkey(cur, key)
+    cur.execute(f"SELECT {', '.join(EDIT_COLS)} FROM entries WHERE id = %s", (args.edit,))
+    row = cur.fetchone()
+    if row is None:
+        sys.exit(f"error: {args.edit} is not in the feed")
+    old = dict(zip(EDIT_COLS, row))
+    if old["type"] not in SIGNABLE_TYPES:
+        sys.exit(f"error: {old['id']} is a {old['type']} — relays are unsigned and cannot be edited")
+
+    entry = {
+        "id": old["id"],
+        "ts": old["ts"],
+        "type": old["type"],
+        "text": read_text(args),
+        "tags": ([t.strip() for t in args.tags.split(",") if t.strip()]
+                 if args.tags is not None else old["tags"]),
+        "edited_at": now_ts(),
+    }
+    if old["source_url"]:
+        entry["source"] = {"title": old["source_title"] or old["source_url"],
+                           "url": old["source_url"]}
+    if old["media_sha256"]:
+        entry["media"] = {"url": old["media_url"], "sha256": old["media_sha256"],
+                          "alt": old["media_alt"]}
+    entry["sig"] = sign_entry(entry, key)
+    canon = canonicalize(entry)
+
+    if args.emit_canonical:
+        args.emit_canonical.write_bytes(canon)
+        print(f"canonical bytes -> {args.emit_canonical} ({len(canon)} bytes)")
+
+    if args.dry_run:
+        print("canonical string (LF shown as \\n, ␄ = end, no trailing newline):")
+        print(visible_canonical(canon))
+        print("entry JSON (not written):")
+        print(json.dumps(entry, ensure_ascii=False, indent=2))
+        return
+
+    cur.execute(
+        f"""INSERT INTO entries_revisions ({', '.join(EDIT_COLS)}, reason)
+            SELECT {', '.join(EDIT_COLS)}, %s FROM entries WHERE id = %s""",
+        ("edit", old["id"]))
+    cur.execute(
+        "UPDATE entries SET text = %s, tags = %s, edited_at = %s, sig = %s WHERE id = %s",
+        (entry["text"], entry["tags"], entry["edited_at"], entry["sig"], old["id"]))
+    conn.commit()
+    print(f"edited {old['id']} -> {CONTRACT_V2} (edited:{entry['edited_at']})")
+    print("pre-edit row archived to entries_revisions (old signature kept)")
+
+
 def cmd_resign(path: Path, key: Ed25519PrivateKey) -> None:
     """Migration helper: (re-)sign entries from a JSON file into the feed.
 
@@ -315,7 +404,8 @@ def main() -> None:
                    help="entry type (relays are unsigned by design and not accepted)")
     p.add_argument("--text", help="post text (or use --text-file / stdin)")
     p.add_argument("--text-file", type=Path)
-    p.add_argument("--tags", default="", help="comma-separated tags")
+    p.add_argument("--tags", default=None,
+                   help="comma-separated tags (with --edit: omit to keep, empty to clear)")
     p.add_argument("--source-title")
     p.add_argument("--source-url", help="required for takes; covered by the signature")
     p.add_argument("--image", type=Path, help="attach an image (EXIF strip is mandatory and automatic)")
@@ -330,6 +420,9 @@ def main() -> None:
                    help="print the raw-32-byte base64 public key and exit")
     p.add_argument("--resign", type=Path, metavar="ENTRIES_JSON",
                    help="(re-)sign entries from a JSON file into the feed")
+    p.add_argument("--edit", metavar="ENTRY-ID",
+                   help="edit text/tags of an existing signed post "
+                        "(re-signed as waelsocial-v2; pre-edit row archived)")
     p.add_argument("--take-from", metavar="CVE-ID",
                    help="signed take about a queue candidate (source prefilled, candidate retired)")
     p.add_argument("--publish-relay", metavar="CVE-ID",
@@ -344,6 +437,11 @@ def main() -> None:
 
     if args.show_pubkey:
         print(pubkey_b64(key))
+        return
+    if args.edit:
+        if args.resign or args.take_from:
+            p.error("--edit cannot be combined with --resign/--take-from")
+        cmd_edit(args, key)
         return
     if args.resign:
         cmd_resign(args.resign, key)

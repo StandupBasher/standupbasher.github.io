@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-bar">
+  <h1>Edit {{ e.id }}</h1>
+  <span class="page-hint">text + tags only — re-signed as waelsocial-v2, history archived</span>
+</div>
+
+<div class="compose-layout">
+  <aside class="cand compose-cand">
+    <div class="cand-head">
+      <span class="chip type {{ e.type }}">{{ e.type }}</span>
+      <span class="cve">{{ e.id }}</span>
+      <span class="cand-date">posted {{ e.ts }}</span>
+    </div>
+    {% if e.edited_at %}<p class="compose-note">already edited {{ e.edited_at }} — this makes a new revision</p>{% endif %}
+    {% if e.source_url %}<a class="btn link" href="{{ e.source_url }}" target="_blank" rel="noopener">{{ e.source_title or e.source_url }} ↗</a>{% endif %}
+    <p class="compose-note">frozen by the signature: id · original ts · type · source · media</p>
+  </aside>
+
+  <div class="compose-form">
+    <form method="post" action="{{ url_for('edit_entry') }}" data-preview="edit">
+      <input type="hidden" name="id" value="{{ e.id }}">
+      <textarea name="text" required autofocus>{{ e.text }}</textarea>
+      <input type="text" name="tags" value="{{ e.tags | join(', ') }}" placeholder="tags, comma-separated (empty clears)">
+      <p class="compose-note">pre-edit row (old signature included) is archived to <b>entries_revisions</b> before anything changes</p>
+      <div class="row"><button class="btn primary big">Re-sign &amp; publish edit ✓</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="previewPane" class="preview" hidden></div>
+
+{% endblock %}

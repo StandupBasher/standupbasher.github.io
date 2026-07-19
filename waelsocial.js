@@ -5,18 +5,26 @@ const API_BASE = "https://api.wael.sh";
 // different pubkey (origin / DNS / CDN compromise), nothing is shown as verified.
 const PINNED_PUBKEY = "/XKGM2r0/oyl47HkuhDK8JiH5pUJvPlRi8btV03S/mE=";
 
+// waelsocial-v1: seven LF-joined lines. waelsocial-v2 (edited posts only):
+// eight lines — `edited:<ts>` slots in after `ts:`. A post is v2 iff it
+// carries edited_at; ts stays the original publish time and both timestamps
+// are under the signature, so an edit can't be backdated or hidden.
 function canonicalize(entry) {
     const sourceUrl = entry.source?.url ?? "";
     const mediaHash = entry.media?.sha256 ?? "";
-    return [
-        "waelsocial-v1",
+    const lines = [
+        entry.edited_at ? "waelsocial-v2" : "waelsocial-v1",
         `id:${entry.id}`,
         `ts:${entry.ts}`,
+    ];
+    if (entry.edited_at) lines.push(`edited:${entry.edited_at}`);
+    lines.push(
         `type:${entry.type}`,
         `source:${sourceUrl}`,
         `media:${mediaHash}`,
         `text:${entry.text}`,
-    ].join("\n");
+    );
+    return lines.join("\n");
 }
 
 async function verifyEntry(entry, pubKey) {
@@ -83,7 +91,12 @@ async function renderFeed(feed, filter, host) {
             : (e.type === "relay" || !e.sig) ? null : undefined;
         if (ok === null) { badge.className = "ws-badge relay"; badge.textContent = "auto · sourced"; }
         else if (ok === undefined) { badge.className = "ws-badge unknown"; badge.textContent = "unverified · browser lacks Ed25519"; }
-        else if (ok) { badge.className = "ws-badge ok"; badge.textContent = "✓ verified"; }
+        else if (ok) {
+            badge.className = "ws-badge ok";
+            badge.textContent = e.edited_at
+                ? `✓ verified · edited ${String(e.edited_at).slice(0, 10)}`
+                : "✓ verified";
+        }
         else { badge.className = "ws-badge bad"; badge.textContent = "✗ signature failed"; }
     }
 }

@@ -120,7 +120,8 @@
                 el("span", "post-id", e.id),
                 el("span", "post-date", e.ts),
                 el("span", "badge " + (d.verified ? "ok" : "bad"),
-                   d.verified ? "✓ will publish verified" : "✗ signature check failed"));
+                   !d.verified ? "✗ signature check failed" :
+                   e.edited_at ? "✓ will publish verified · edited" : "✓ will publish verified"));
     card.append(head, el("p", "post-text", e.text));
     if (e.tags && e.tags.length) {
       const tw = el("div", "post-tags");

@@ -27,6 +27,7 @@ struct Row {
     media_sha256: Option<String>,
     media_alt: Option<String>,
     sig: Option<String>,
+    edited_at: Option<String>, // exact signed string, like ts; v2 posts only
 }
 
 /// One entry as the locked contract serves it — nested source/media,
@@ -45,6 +46,8 @@ struct Entry {
     media: Option<MediaRef>,
     #[serde(skip_serializing_if = "Option::is_none")]
     sig: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    edited_at: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -77,6 +80,7 @@ impl From<Row> for Entry {
                 _ => None,
             },
             sig: r.sig,
+            edited_at: r.edited_at,
         }
     }
 }
@@ -113,7 +117,7 @@ async fn build_feed(pool: &PgPool, page: Page) -> Result<Feed> {
             .await?;
 
     const COLS: &str = "id, ts, type, text, tags, source_title, source_url, \
-                        media_url, media_sha256, media_alt, sig";
+                        media_url, media_sha256, media_alt, sig, edited_at";
     let rows: Vec<Row> = match &page.before {
         Some(ts) => {
             sqlx::query_as(&format!(

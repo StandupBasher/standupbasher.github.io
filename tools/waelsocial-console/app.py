@@ -81,9 +81,13 @@ def feed_stats() -> dict:
     return stats
 
 
+def get_entry(entry_id: str) -> dict | None:
+    return next((e for e in published_entries() if e["id"] == entry_id), None)
+
+
 def published_entries() -> list[dict]:
     cols = ("id", "ts", "type", "text", "tags", "source_title", "source_url",
-            "media_url", "media_sha256", "media_alt", "sig")
+            "media_url", "media_sha256", "media_alt", "sig", "edited_at")
     conn = db()
     try:
         cur = conn.cursor()
@@ -273,6 +277,16 @@ def compose_view():
     return render_template("compose.html", cand=cand, active="compose")
 
 
+@app.get("/edit")
+def edit_view():
+    e = get_entry(request.args.get("id", "").strip())
+    if e is None:
+        return done("published_view", "no such entry", False)
+    if e["type"] == "relay":
+        return done("published_view", "relays are unsigned and cannot be edited", False)
+    return render_template("edit.html", e=e, active="published")
+
+
 # ── actions ─────────────────────────────────────────────────────────
 
 @app.post("/publish/mine")
@@ -312,7 +326,11 @@ def preview():
     kind = request.form.get("kind", "mine")
     if not text.strip():
         return {"ok": False, "error": "type something to preview"}
-    if kind == "take":
+    if kind == "edit":
+        entry_id = request.form.get("id", "").strip()
+        tags = request.form.get("tags", "").strip()
+        args = ["--edit", entry_id, "--tags", tags, "--dry-run"]
+    elif kind == "take":
         cve = request.form.get("cve", "").strip()
         if not find_candidate(cve):
             return {"ok": False, "error": f"{cve} is not in the queue"}
@@ -336,7 +354,21 @@ def preview():
     verify_entries([flat], feed_stats()["pubkey"])
     return {"ok": True, "entry": flat,
             "canonical": canonical(flat).decode("utf-8"),
-            "verified": flat["verify"] == "ok"}
+            "verified": flat["verify"] in ("ok", "ok-edited")}
+
+
+@app.post("/edit")
+def edit_entry():
+    """sign-post --edit: text/tags only, re-signed as waelsocial-v2, pre-edit
+    row archived server-side by the claude-owned tool. wsdash still writes
+    nothing itself."""
+    entry_id = request.form.get("id", "").strip()
+    text = request.form.get("text", "").strip()
+    tags = request.form.get("tags", "").strip()
+    if not entry_id or not text:
+        return done("published_view", "missing entry id or text", False)
+    ok, out = run_sign_post(["--edit", entry_id, "--tags", tags], stdin_text=text)
+    return done("published_view", out, ok)
 
 
 @app.post("/remove")
