@@ -13,119 +13,238 @@
   <meta name="twitter:card" content="summary" />
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;800&family=IBM+Plex+Sans:wght@400;450;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
+
   <header class="nav">
-    <div class="brand">
-        <span class="dot"></span>
-        <span id="brandText" class="logo-text"></span>
-        <span class="brand-cursor">▌</span>
-    </div>
-    <nav>
-      <a href="#feed">Feed</a>
-      <a href="#about">About</a>
-      <a href="#projects">Projects</a>
-      <a href="#contact">Contact</a>
+    <a class="brand" href="#/" aria-label="Home">
+      <span class="dot"></span>
+      <span class="brand-text"><span id="brandText"></span><span class="brand-cursor" aria-hidden="true">▌</span></span>
+    </a>
+    <nav aria-label="Site">
+      <a class="nav-link" href="#/" data-nav="home">home</a>
+      <a class="nav-link" href="#/work" data-nav="work">work</a>
+      <a class="nav-link" href="#/feed" data-nav="feed">feed</a>
+      <a class="nav-link" href="#/writing" data-nav="writing">writing</a>
+      <a class="nav-link" href="#/about" data-nav="about">about</a>
+      <a class="nav-link" href="#/contact" data-nav="contact">contact</a>
+      <button type="button" id="paletteBtn" class="nav-search">search<span class="kbd-hint">⌘K</span></button>
     </nav>
   </header>
 
   <main>
-    <section class="hero" aria-label="Intro">
-      <div class="terminal">
-        <div class="term-header">
-          <span class="btn red"></span>
-          <span class="btn yellow"></span>
-          <span class="btn green"></span>
-          <span class="path">wael@portfolio:~</span>
-        </div>
-        <div class="term-body">
-          <pre aria-live="polite"><span class="prompt">wael@portfolio</span>:<span class="path">~</span>$ <span id="typing"></span><span class="cursor" aria-hidden="true">▌</span></pre>
-        </div>
-      </div>
-      <p class="sub">Cybersecurity student • Malware research • RA & community builder</p>
+
+    <section class="page page-home" data-page="home" aria-label="Intro">
+      <p class="cmdline">$ whoami</p>
+      <h1 class="hero-name">Wael Shahadeh</h1>
+      <p class="hero-tag">I build, break, and verify.</p>
+      <p class="hero-sub">Cybersecurity senior at Marist University — malware research, network analysis, and secure lab builds.</p>
       <div class="cta-row">
-        <a class="btn-primary" href="#projects">View Projects</a>
+        <a class="btn-primary" href="#/work">View work</a>
         <a class="btn-ghost" href="https://github.com/StandupBasher" target="_blank" rel="noopener">GitHub</a>
         <a class="btn-ghost" href="https://www.linkedin.com/in/wael-shahadeh/" target="_blank" rel="noopener">LinkedIn</a>
       </div>
-    </section>
 
-    <section id="feed" class="section" aria-label="WaelSocial signed feed">
-      <h2>WaelSocial</h2>
-      <p class="ws-sub">
-        A live, signed feed. Verified entries are checked in <em>your</em> browser —
-        Ed25519 via Web Crypto against the feed's public key. Auto-pulled security
-        news is labeled and never gets the checkmark. View source; it's all client-side.
-      </p>
-      <div class="ws-filters" role="group" aria-label="Filter feed">
-        <button type="button" class="ws-pill" data-ws-filter="all">All</button>
-        <button type="button" class="ws-pill on" data-ws-filter="mine">My work</button>
-        <button type="button" class="ws-pill" data-ws-filter="signal">Security signal</button>
+      <div class="terminal">
+        <div class="term-header">
+          <span class="term-dot"></span>
+          <span class="term-dot"></span>
+          <span class="term-dot"></span>
+          <span class="term-title">wael@portfolio:~ — try `help`</span>
+        </div>
+        <div class="term-body" id="termBody">
+          <div id="termLines" aria-live="polite">
+            <div class="term-line"><span class="t-prompt">wael@portfolio</span><span class="t-path">:~$ </span>whoami</div>
+            <div class="term-line t-muted">Wael Shahadeh — cybersecurity senior, malware research, digital investigations. Type `help`.</div>
+          </div>
+          <div class="term-input-row">
+            <span class="t-prompt">wael@portfolio</span><span class="t-path">:~$&nbsp;</span>
+            <input id="termInput" spellcheck="false" autocomplete="off" aria-label="Terminal input" />
+          </div>
+        </div>
       </div>
-      <div id="ws-feed" class="ws-feed">
-        <p class="ws-empty">Loading feed…</p>
+    </section>
+
+    <section class="page" data-page="work" aria-label="Work">
+      <p class="cmdline">$ ls work/</p>
+      <div class="page-head">
+        <h1>Work</h1>
+        <span class="page-hint">problem → approach → outcome</span>
       </div>
-    </section>
+      <div class="case-list">
 
-    <section id="about" class="section">
-      <h2>About</h2>
-      <p>
-        I’m Wael Shahadeh, a senior at Marist University pursuing a B.S. in Cybersecurity with minors in CS, IS, IT,
-        and Criminal Justice. I’m hands-on with malware analysis, network traffic, and building secure lab
-        environments. I also serve as a Resident Assistant and advisor, turning complex topics into approachable,
-        engaging programs for students.
-      </p>
-      <ul class="badges" aria-label="Tech stack">
-        <li>Kali Linux</li>
-        <li>Wireshark</li>
-        <li>Python</li>
-        <li>Git</li>
-        <li>Metasploit</li>
-        <li>VirtualBox</li>
-      </ul>
-    </section>
-
-    <section id="projects" class="section">
-      <h2>Projects</h2>
-
-      <div class="grid">
-        <article class="card">
-          <h3>macOS Backdoor Detection (Research)</h3>
-          <p>Exploring ML-driven detection using system logs to identify backdoor behavior beyond signatures.</p>
-          <div class="tags"><span>macOS</span><span>ML</span><span>Security Logs</span></div>
+        <article class="case open">
+          <button type="button" class="case-head">
+            <h3>WaelSocial — signed feed</h3>
+            <span class="case-chip shipped">shipped</span>
+            <span class="case-caret">− close</span>
+          </button>
+          <div class="case-body">
+            <p class="case-summary">A social-style feed where every authored post is Ed25519-signed offline and verified in the visitor's browser via Web Crypto. Auto-relayed security news is labeled and never earns the checkmark — view source, it's all client-side.</p>
+            <div class="case-grid">
+              <div class="case-cell lead"><p class="case-label">Problem</p><p>Static hosts and CDNs can silently serve tampered content; "trust the server" isn't a threat model.</p></div>
+              <div class="case-cell"><p class="case-label">Approach</p><p>Sign posts offline; pin the public key in the page; verify each entry client-side. Wrong key → nothing shows verified.</p></div>
+              <div class="case-cell"><p class="case-label">Outcome</p><p>The ✓ attests authorship by one specific key — an origin or DNS compromise can't fake it.</p></div>
+            </div>
+            <div class="case-tags"><span>Ed25519</span><span>Web Crypto</span><span>Python tooling</span><span>Threat modeling</span></div>
+          </div>
         </article>
 
-        <article class="card">
-          <h3>PC Repair & OS Re-imaging Internship</h3>
-          <p>Diagnosed, repaired, and re-imaged PCs for donation — practical triage + imaging.</p>
-          <div class="tags"><span>Imaging</span><span>Deployment</span><span>Support</span></div>
+        <article class="case">
+          <button type="button" class="case-head">
+            <h3>macOS backdoor detection</h3>
+            <span class="case-chip">research</span>
+            <span class="case-caret">+ expand</span>
+          </button>
+          <div class="case-body">
+            <p class="case-summary">Exploring ML-driven detection using macOS system logs to identify backdoor behavior that signature-based tools miss.</p>
+            <div class="case-grid">
+              <div class="case-cell lead"><p class="case-label">Problem</p><p>Signature AV misses novel or modified backdoors entirely.</p></div>
+              <div class="case-cell"><p class="case-label">Approach</p><p>Train models on unified log streams to flag behavioral patterns rather than known hashes.</p></div>
+              <div class="case-cell"><p class="case-label">Outcome</p><p>Ongoing senior research — writeup in progress.</p></div>
+            </div>
+            <div class="case-tags"><span>macOS</span><span>ML</span><span>Security logs</span></div>
+          </div>
         </article>
 
-        <article class="card">
-          <h3>RA Programming</h3>
-          <p>Organize and host events that foster connection, cultural awareness, and student wellness for the building of an inclusive community.</p>
-          <div class="tags"><span>Education</span><span>Security</span><span>Leadership</span></div>
+        <article class="case">
+          <button type="button" class="case-head">
+            <h3>PC repair &amp; OS re-imaging</h3>
+            <span class="case-chip">internship</span>
+            <span class="case-caret">+ expand</span>
+          </button>
+          <div class="case-body">
+            <p class="case-summary">Diagnosed, repaired, and re-imaged donated PCs end-to-end: hardware triage, data sanitization, and clean OS deployment.</p>
+            <div class="case-grid">
+              <div class="case-cell lead"><p class="case-label">Problem</p><p>Donated hardware arrives in unknown, often broken states.</p></div>
+              <div class="case-cell"><p class="case-label">Approach</p><p>Systematic triage → repair → wipe → image pipeline, one machine at a time.</p></div>
+              <div class="case-cell"><p class="case-label">Outcome</p><p>Working, cleanly imaged machines back in circulation.</p></div>
+            </div>
+            <div class="case-tags"><span>Imaging</span><span>Deployment</span><span>Support</span></div>
+          </div>
         </article>
+
+        <article class="case">
+          <button type="button" class="case-head">
+            <h3>RA programming</h3>
+            <span class="case-chip">ongoing</span>
+            <span class="case-caret">+ expand</span>
+          </button>
+          <div class="case-body">
+            <p class="case-summary">Organize and host residence-hall events that build connection, cultural awareness, and student wellness — including security-literacy programming.</p>
+            <div class="case-grid">
+              <div class="case-cell lead"><p class="case-label">Problem</p><p>Security advice bounces off people when it's preachy or abstract.</p></div>
+              <div class="case-cell"><p class="case-label">Approach</p><p>Meet people where they are: events first, lessons embedded.</p></div>
+              <div class="case-cell"><p class="case-label">Outcome</p><p>Consistent turnout and an inclusive community that asks security questions unprompted.</p></div>
+            </div>
+            <div class="case-tags"><span>Education</span><span>Security</span><span>Leadership</span></div>
+          </div>
+        </article>
+
       </div>
     </section>
 
-    <section id="contact" class="section">
-      <h2>Contact</h2>
-      <p>Open to careers, internships, research collabs, and security projects.</p>
-      <div class="cta-row">
-        <a class="btn-primary" href="mailto:shahadehwael@gmail.com">Email Me</a>
-        <a class="btn-primary" href="resume\index.html">Resume</a>
+    <section class="page" data-page="feed" aria-label="WaelSocial signed feed">
+      <p class="cmdline">$ tail -f feed</p>
+      <h1>WaelSocial</h1>
+      <div class="feed-layout">
+        <aside class="feed-side">
+          <p class="feed-blurb">A live, signed feed. Verified entries are checked in <em>your</em> browser — Ed25519 via Web Crypto against a pinned public key. Auto-pulled news is labeled and never gets the checkmark. View source; it's all client-side.</p>
+          <div class="key-card">
+            <p class="key-label">Pinned signing key</p>
+            <p class="key-value">/XKGM2r0/oyl47HkuhDK8JiH5pUJvPlRi8btV03S/mE=</p>
+          </div>
+        </aside>
+        <div class="feed-main">
+          <div class="ws-filters" role="group" aria-label="Filter feed">
+            <button type="button" class="ws-pill" data-ws-filter="all">All</button>
+            <button type="button" class="ws-pill on" data-ws-filter="mine">My work</button>
+            <button type="button" class="ws-pill" data-ws-filter="signal">Security signal</button>
+          </div>
+          <div id="ws-feed" class="ws-feed">
+            <p class="ws-empty">Loading feed…</p>
+          </div>
+        </div>
       </div>
     </section>
+
+    <section class="page" data-page="writing" aria-label="Writing">
+      <p class="cmdline">$ cat writing/</p>
+      <h1>Writing</h1>
+      <div class="writing-grid">
+        <div class="writing-card">
+          <span class="writing-kicker">draft · from the WaelSocial build</span>
+          <span class="writing-title">Pinning a public key in a static-site feed</span>
+          <span class="writing-blurb">Why the checkmark attests authorship by one key — not whatever key the response happens to carry.</span>
+        </div>
+        <div class="writing-card">
+          <span class="writing-kicker">draft · research notes</span>
+          <span class="writing-title">Reading macOS logs for detection, not forensics</span>
+          <span class="writing-blurb">Notes from training models on unified log streams to flag backdoor-like behavior.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="about" aria-label="About">
+      <p class="cmdline">$ cat about.txt</p>
+      <h1>About</h1>
+      <div class="about-layout">
+        <div class="about-prose">
+          <p>Senior at Marist University — B.S. in Cybersecurity with minors in CS, IS, IT, and Criminal Justice. Hands-on with malware analysis, network traffic, and building secure lab environments.</p>
+          <p>As a Resident Assistant and advisor, I turn complex topics into approachable, engaging programs — security is a people problem too.</p>
+        </div>
+        <div class="about-side">
+          <div>
+            <h3 class="side-label">Skills</h3>
+            <div class="skills">
+              <div class="skill-row"><span class="skill-key">analysis</span><span>Wireshark · Kali Linux · Metasploit</span></div>
+              <div class="skill-row"><span class="skill-key">build</span><span>Python · Git · Web Crypto / Ed25519</span></div>
+              <div class="skill-row"><span class="skill-key">lab</span><span>VirtualBox · isolated networks · OS imaging</span></div>
+            </div>
+          </div>
+          <div class="lab-card">
+            <h3 class="side-label">Lab setup</h3>
+            <div class="lab-rows">
+              <div class="lab-row"><span class="lab-tick">▸</span><span>VirtualBox — isolated attacker/target VMs</span></div>
+              <div class="lab-row"><span class="lab-tick">▸</span><span>Kali + Metasploit for offensive drills</span></div>
+              <div class="lab-row"><span class="lab-tick">▸</span><span>Wireshark captures on lab-only networks</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="contact" aria-label="Contact">
+      <p class="cmdline">$ ping wael</p>
+      <h1>Contact</h1>
+      <div class="contact-card">
+        <p class="contact-pitch">Open to internships, research collabs, and security work.</p>
+        <div class="cta-row">
+          <a class="btn-primary" href="mailto:shahadehwael@gmail.com">Email me</a>
+          <a class="btn-ghost" href="resume\index.html">Resume</a>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <footer class="footer">
-    <p><span id="year"></span> Wael Shahadeh — <span class="tagline flicker">stay curious, keep plotting</span></p>
+    <p><span id="year"></span> Wael Shahadeh — <span class="tagline">stay curious, keep plotting</span></p>
   </footer>
+
+  <div id="palette" class="palette-overlay" hidden>
+    <div class="palette-panel" role="dialog" aria-label="Command palette">
+      <div class="palette-head">
+        <span class="palette-prompt">$</span>
+        <input id="paletteInput" placeholder="jump to…" spellcheck="false" aria-label="Search commands" />
+        <span class="palette-esc">esc</span>
+      </div>
+      <div id="paletteItems" class="palette-items"></div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
   <script src="waelsocial.js"></script>
 </body>
 </html>
- 
